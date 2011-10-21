@@ -24,7 +24,31 @@ var CHITCHAT = CHITCHAT || {};
     };
 
     builtins = {
-        Object: {},
+        Object: {
+            getMethod: function (selector) {
+                return getImplementation(this, selector);
+            },
+
+            respondsTo: function (selector) {
+                return getImplementation(this, selector) != null;
+            },
+
+            isNull: function () {
+                return this == CHITCHAT.NULL;
+            },
+
+            isA: function (type) {
+
+            },
+
+            isAn: function () {
+
+            },
+
+            typeString: function () {
+                return type(this); 
+            }
+        },
 
         Number: {},
 
@@ -32,35 +56,17 @@ var CHITCHAT = CHITCHAT || {};
 
         Array: {},
 
+        Function: {
+            extend: function () {
+
+            },
+
+            doTimes: function () {}
+        },
+
         Null: {}
     };
 
-    {
-        'getMethod:': function (selector) {
-            return getImplementation(this, selector);
-        },
-
-        'respondsTo:': function (selector) {
-            return getImplementation(this, selector) != null;
-        },
-
-        'isNull': function () {
-            return this == null;
-        },
-
-        'isA:': function (type) {
-            return type === null && this 
-                          
-        },
-
-        'isAn:': function () {
-
-        },
-
-        'typeString': function () {
-            return type(this); 
-        }
-    };
 
     type = function (obj) {
         return obj === this      ? 'Global'
