@@ -27,8 +27,8 @@ Message passing
 --
 
     (receiver messageName arg1 arg2 ...)
-    (receiver @varContainingMessageName arg1 arg2 ...)
-    (receiver @("message" + "Name") arg1 arg2) 
+    (receiver ~varContainingMessageName arg1 arg2 ...)
+    (receiver ~("message" + "Name") arg1 arg2) 
 
 Conditionals
 --
@@ -96,3 +96,42 @@ I heard that it's actually practical).
     ;; Also I think I'll probably include argument references. Why not
 
     ^{ (%1 + %2) }    ; function () { return arguments[1] + arguments[2]; }
+
+Error Handling
+--
+
+    (try body...)
+
+    (try/catch block block)
+
+    (try/catch
+        ^{ (foo doSomething) }
+        ^(err) { (foo handle err) })
+
+    (try/catch/finally block block block)
+
+    try {
+        foo.doSomething();
+    } catch (err) {
+        foo.handle(err);
+    } finally {
+        foo.cleanup();
+    }
+
+    (try/catch/finally
+        {
+            @doSomething()
+        }
+        ^(err){ @handle(err) }
+        {
+            @foo(cleanup) 
+        })
+
+Iteration
+--
+
+In lou of a keyword, I think I'll implement looping in instance methods, e.g. map, filter, reduce 
+
+For more ad-hoc iteration, I can implement Function::repeatTill Function( -> Boolean) condition so that you can do
+
+    ({ (set! i (i - 1)) } repeatTill { (i > 0) })
