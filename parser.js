@@ -59,14 +59,18 @@
 
         char = str.charAt(i);
 
-        if (char == ' ' || char == '\t' || char == '\n') {
-            return i + 1;
-        }
+        switch (str.charAt(i)) {
+            case ' ':
+            case '\t':
+            case '\n':
+                return i + 1;
 
-        head = str.slice(i);
+            case ';':
+                while (str.charAt(i) != '\n') i++;
+                return i + 1;
 
-        if (head.charAt(0) === '"') {
-            return readString(tokens, str, i);
+            case '"':
+                return readString(tokens, str, i);
         }
 
         for (key in SIMPLE_TOKENS) if (SIMPLE_TOKENS.hasOwnProperty(key)) {
@@ -80,6 +84,8 @@
                 return end;
             }
         }
+
+        head = str.slice(i);
 
         for (key in PATTERNS) if (PATTERNS.hasOwnProperty(key)) { 
             assert(key in TokenTypes, key + ' is a TokenType');

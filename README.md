@@ -27,8 +27,8 @@ Message passing
 --
 
     (receiver messageName arg1 arg2 ...)
-    (receiver @varContainingMessageName arg1 arg2 ...)
-    (receiver @("message" + "Name") arg1 arg2) 
+    (receiver ~varContainingMessageName arg1 arg2 ...)
+    (receiver ~("message" + "Name") arg1 arg2) 
 
 Conditionals
 --
@@ -74,3 +74,64 @@ Literals
 Like Javscript, Chitchat provides literals for Arrays, Objects, Strings, Numbers, and Functions.
 There are no RegExp literals because I'm too lazy to parse them (maybe you should use coffescript 
 I heard that it's actually practical).
+
+    #[1 2 3]          ; [1, 2, 3]
+    #{ a 1 b 3 }      ; { a: 1, b: 3 }
+    "foo bar"         ; "foo bar"
+    "foo 
+     bar"             ; "foo\n bar"
+    213               ; 213
+
+    ;; Function Literals
+    ;; -----------------
+    ;;
+    ;; These will definitely become lispier
+    ;; I have to be able to parse this mess
+
+    ^{ foo }          ; function () { return foo; }
+    ^(a b){ (a + b) } ; function (a, b) { return a + b; }
+    ^(a b)[ a + b ]   ; function (a, b) { return a + b; }
+    #(slice 0 1)      ; synonym for `^(a) [ a slice 0 1 ]`  
+
+    ;; Also I think I'll probably include argument references. Why not
+
+    ^{ (%1 + %2) }    ; function () { return arguments[1] + arguments[2]; }
+
+Error Handling
+--
+
+    (try body...)
+
+    (try/catch block block)
+
+    (try/catch
+        ^{ (foo doSomething) }
+        ^(err) { (foo handle err) })
+
+    (try/catch/finally block block block)
+
+    try {
+        foo.doSomething();
+    } catch (err) {
+        foo.handle(err);
+    } finally {
+        foo.cleanup();
+    }
+
+    (try/catch/finally
+        {
+            @doSomething()
+        }
+        ^(err){ @handle(err) }
+        {
+            @foo(cleanup) 
+        })
+
+Iteration
+--
+
+In lou of a keyword, I think I'll implement looping in instance methods, e.g. map, filter, reduce 
+
+For more ad-hoc iteration, I can implement Function::repeatTill Function( -> Boolean) condition so that you can do
+
+    ({ (set! i (i - 1)) } repeatTill { (i > 0) })
