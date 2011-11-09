@@ -1,135 +1,4 @@
 (function () {
-    /*jshint curly: false, eqnull: true */
-    var tokenize, parse, 
-        readToken,
-        readString,
-        TokenTypes,
-        escape_table,
-        assert,
-        SIMPLE_TOKENS,
-        PATTERNS;
-
-    assert = function (exp, msg) {
-        if (!exp) throw new Error(msg || "assertion failed");
-    };
-
-    TokenTypes = {
-        OPEN_PAREN: 'OPEN_PAREN',
-        CLOSE_PAREN: 'CLOSE_PAREN',
-        OPEN_BRACE: 'OPEN_BRACE',
-        RIGHT_BRACE: 'RIGHT_BRACE',
-        OPEN_BRACKET: 'OPEN_BRACKET',
-        RIGHT_BRACKET: 'RIGHT_BRACKET',
-        NUMBER: 'NUMBER',
-        DOT: 'DOT',
-        SYMBOL: 'SYMBOL',
-        STRING: 'STRING'
-    };
-
-    SIMPLE_TOKENS = {
-        OPEN_PAREN: '(', CLOSE_PAREN: ')',
-        OPEN_BRACE: '{', CLOSE_BRACE: '}',
-        OPEN_BRACKET: '[', CLOSE_BRACKET: ']',
-        OCTOTHORPE: '#'
-    };
-
-    PATTERNS = {
-        SYMBOL: /_|[a-z]\w*/,
-        NUMBER: /-?(0|([1-9]\d*))(\.\d+)?((e|E)(\+|\-)\d+)?/
-    };
-
-    escape_table = {
-        '"': '"',
-        '\\': '\\',
-        b: '\b',
-        f: '\f',
-        n: '\n',
-        r: '\r',
-        t: '\t'
-    };
-
-    tokenize = function (str) {
-        var tokens = [], i = 0;
-        while (i < str.length) i = readToken(tokens, str, i);
-        return tokens;
-    };
-
-    readToken = function (tokens, str, i) {
-        var char, head, match, slice, key, end;
-
-        char = str.charAt(i);
-
-        switch (str.charAt(i)) {
-            case ' ':
-            case '\t':
-            case '\n':
-                return i + 1;
-
-            case ';':
-                while (str.charAt(i) != '\n') i++;
-                return i + 1;
-
-            case '"':
-                return readString(tokens, str, i);
-        }
-
-        for (key in SIMPLE_TOKENS) if (SIMPLE_TOKENS.hasOwnProperty(key)) {
-            assert(key in TokenTypes, key + ' is a TokenType');
-
-            end = i + SIMPLE_TOKENS[key].length; 
-            slice = str.slice(i, end); 
-
-            if (slice === SIMPLE_TOKENS[key]) {
-                tokens.push({ type: TokenTypes[key] });
-                return end;
-            }
-        }
-
-        head = str.slice(i);
-
-        for (key in PATTERNS) if (PATTERNS.hasOwnProperty(key)) { 
-            assert(key in TokenTypes, key + ' is a TokenType');
-
-            match = PATTERNS[key].exec(head);
-
-            if (match) {
-                tokens.push({ type: TokenTypes[key], value: match[0]});
-                return i + match[0].length; 
-            }
-        }
-
-        throw new Error("Couldn't tokenize " + str + " @ " + i + "'" + char + "'");
-    };
-
-    readString = function (tokens, str, i) {
-        var code, code_point, start = i, value = '';
-
-        while (i < str.length) {
-            switch (str.charAt(i)) {
-                case '\\':
-                    i++;
-                    code = str.charAt(i++);
-                    if (code === 'u') {
-                        code_point = parseInt(str.slice(i, i + 4), 16);
-                        value += String.fromCharCode(code_point);
-                        i += 4;
-                    } else {
-                        value += escape_table[code];
-                    }
-                break;
-
-                case '"':
-                    tokens.push({ type: TokenTypes.STRING, value: value });
-                    return i + 1;
-
-                default:
-                    value += str.charAt(i);
-            }
-        }
-
-        throw new Error("unexpected EOF in string starting at " + i);
-    };
-
     // Chitchat Grammar
     // ----------------
     //
@@ -150,19 +19,23 @@
     // function-expr := '(' 'fn' '[' [ symbol ]* ']' var-statement? [ expression ]* ')'
     // var-statement := '(' 'var' [ symbol ]* ')' 
     // assignment    := '(' 'set!' reference expression ')'
-    
+    // throw         := '(' 'throw' reference expression ')'
+    // try           := '(' 'try' reference expression ')'
+    // assignment    := '(' 'set!' reference expression ')'
 
-    /*jshint onevar: false*/
-    var parseExpression, parseMessagePass, parseReference, parseLiteral;
-    var parseDictionary, parseArray, parseFunction, parseConditional, parseAssignment;
+    var parseExpression, parseMessagePass, parseReference, parseLiteral,
+        parseDictionary, parseArray, parseFunction, parseConditional, parseAssignment,
+        P;
+
+    P = CHITCHAT.ParseTypes;
 
     parseExpression = function (tokens) {         
         switch ( tokens[0].type ) {
             case TokenTypes.STRING:
-                return tokens.shift().value;
+                return new P.StringLiteral(tokens.shift().value);
 
             case TokenTypes.NUMBER:
-                return Number(tokens.shift().value);
+                return new P.NumberLiteral(tokens.shift().value);
 
             case TokenTypes.OCTOTHORPE:
                 return parseLiteral(tokens);
@@ -191,6 +64,15 @@
             case 'set!':
                 return parseAssignment(tokens);
 
+            case 'try':
+                return parseTry();
+
+            case 'try/catch/finally':
+                return parseTryCatchFinally();
+
+            case 'throw':
+                return parseThrow();
+
             default:  
                 return parseMessagePass(tokens);
         }
@@ -207,6 +89,14 @@
             default:
                 throw new Error("Well... I'm confused");
         }
+    };
+
+    parseDictionary = function (tokens) {
+        //
+    };
+
+    parseArray = function (tokens) {
+        //
     };
 
     parseFunction = function (tokens) {
@@ -244,19 +134,18 @@
         }
         tokens.shift();
 
-        return new FunctionExpression(args, vars, body);
+        return new P.FunctionExpression(args, vars, body);
     };
 
-    // reference := symbol rest
-    // rest      := '.' symbol rest
-    //           := '[' expression ']' rest
-    //           := epsilon 
-    //
-    var Reference, SimpleReference, DotReference, BracketReference;
-
+    // identifier := symbol ; This must be a legal javascript identifier
+    // reference  := identifier rest
+    // rest       := '.' symbol rest
+    //            := '[' expression ']' rest
+    //            := epsilon 
     parseReference = function (tokens) {
         assert(tokens[0].type = TokenTypes.SYMBOL);
-        var ref = new SimpleReference(tokens.shift().value),
+        
+        var ref = new Reference(null, new P.Identifier(tokens.shift().value)), 
             sym, exp;
 
         while (tokens.length) {
@@ -264,14 +153,14 @@
                 case TokenTypes.DOT:
                     sym = tokens.shift();
                     assert(sym.type == TokenTypes.SYMBOL);
-                    ref = new DotReference(ref, sym.value);
+                    ref = new Reference(ref, new P.StringLiteral(sym.value));
                 break;
 
                 case TokenTypes.OPEN_BRACKET:
                     assert(tokens.shift().type == TokenTypes.OPEN_BRACKET);
                     exp = parseExpression(tokens);
                     assert(tokens.shift().type == TokenTypes.CLOSE_BRACKET);
-                    ref = new BracketReference(ref, exp);
+                    ref = new Reference(ref, exp);
                 break;
 
                 default:
