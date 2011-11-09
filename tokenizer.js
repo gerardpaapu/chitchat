@@ -65,6 +65,7 @@
             case '\n':
                 return i + 1;
 
+            // comments begin with ';' and continue to the end of the line
             case ';':
                 while (str.charAt(i) != '\n') i++;
                 return i + 1;
