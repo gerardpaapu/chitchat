@@ -18,20 +18,21 @@
         OPEN_PAREN: 'OPEN_PAREN',
         CLOSE_PAREN: 'CLOSE_PAREN',
         OPEN_BRACE: 'OPEN_BRACE',
-        RIGHT_BRACE: 'RIGHT_BRACE',
+        CLOSE_BRACE: 'CLOSE_BRACE',
         OPEN_BRACKET: 'OPEN_BRACKET',
-        RIGHT_BRACKET: 'RIGHT_BRACKET',
+        CLOSE_BRACKET: 'CLOSE_BRACKET',
         NUMBER: 'NUMBER',
         DOT: 'DOT',
         SYMBOL: 'SYMBOL',
-        STRING: 'STRING'
+        STRING: 'STRING',
+        OCTOTHORPE: 'OCTOTHORPE'
     };
 
     SIMPLE_TOKENS = {
         OPEN_PAREN: '(', CLOSE_PAREN: ')',
         OPEN_BRACE: '{', CLOSE_BRACE: '}',
         OPEN_BRACKET: '[', CLOSE_BRACKET: ']',
-        OCTOTHORPE: '#'
+        OCTOTHORPE: '#', DOT: '.'
     };
 
     PATTERNS = {
