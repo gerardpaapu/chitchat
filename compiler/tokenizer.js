@@ -1,5 +1,6 @@
 (function () {
     /*jshint curly: false, eqnull: true */
+    /*globals exports: false */
     var tokenize, 
         readToken,
         readString,
@@ -13,7 +14,7 @@
         if (!exp) throw new Error(msg || "assertion failed");
     };
 
-    CHITCHAT.TokenTypes = TokenTypes = {
+    exports.TokenTypes = TokenTypes = {
         OPEN_PAREN: 'OPEN_PAREN',
         CLOSE_PAREN: 'CLOSE_PAREN',
         OPEN_BRACE: 'OPEN_BRACE',
@@ -48,7 +49,7 @@
         t: '\t'
     };
 
-    CHITCHAT.tokenize = tokenize = function (str) {
+    exports.tokenize = tokenize = function (str) {
         var tokens = [], i = 0;
         while (i < str.length) i = readToken(tokens, str, i);
         return tokens;
