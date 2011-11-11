@@ -107,6 +107,8 @@
     readString = function (tokens, str, i) {
         var code, code_point, start = i, value = '';
 
+        assert(str.charAt(i++) === '"');
+
         while (i < str.length) {
             switch (str.charAt(i)) {
                 case '\\':
@@ -126,7 +128,7 @@
                     return i + 1;
 
                 default:
-                    value += str.charAt(i);
+                    value += str.charAt(i++);
             }
         }
 
