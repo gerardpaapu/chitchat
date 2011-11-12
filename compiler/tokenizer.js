@@ -36,8 +36,8 @@
     };
 
     PATTERNS = {
-        SYMBOL: /_|[a-z]\w*/,
-        NUMBER: /-?(0|([1-9]\d*))(\.\d+)?((e|E)(\+|\-)\d+)?/
+        SYMBOL: /^_|[a-z]\w*/,
+        NUMBER: /^-?(0|([1-9]\d*))(\.\d+)?((e|E)(\+|\-)\d+)?/
     };
 
     escape_table = {
@@ -52,7 +52,9 @@
 
     exports.tokenize = tokenize = function (str) {
         var tokens = [], i = 0;
-        while (i < str.length) i = readToken(tokens, str, i);
+        while (i < str.length) {
+            i = readToken(tokens, str, i);
+        }
         return tokens;
     };
 
@@ -93,9 +95,9 @@
         for (key in PATTERNS) if (PATTERNS.hasOwnProperty(key)) { 
             assert(key in TokenTypes, key + ' is a TokenType');
 
-            match = PATTERNS[key].exec(head);
+            match = new RegExp(PATTERNS[key].source).exec(head);
 
-            if (match) {
+            if (match && match.index === 0) {
                 tokens.push({ type: TokenTypes[key], value: match[0]});
                 return i + match[0].length; 
             }
