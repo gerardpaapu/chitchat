@@ -89,7 +89,7 @@ keywords = {
         : tail ? 'function ($0) { return $2; }'
         : 'function ($0){}';
 
-        return format(template, compile(arg_s), compile(body_s), compile(tail_s)); 
+        return format(template, arg_s, body_s, tail_s || ''); 
     },
 
     '#ARRAY': function () {
