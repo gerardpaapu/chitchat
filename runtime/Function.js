@@ -1,5 +1,12 @@
 (function () {
-    var FUNCTION, Dummy;
+    var CHITCHAT, FUNCTION, Dummy;
+
+    if (typeof require == 'function') {
+        CHITCHAT = require('./chitchat.js').CHITCHAT;
+    } else if (typeof window != 'undefined' && window.CHITCHAT) {
+        CHITCHAT = window.CHITCHAT;
+    }
+
     FUNCTION = CHITCHAT.builtins.Function = function (foo) {
         return function () {
             return foo;
@@ -23,6 +30,7 @@
 
     FUNCTION.prototype.compose = function () {};
     */
+    Dummy = function () {};
 
     FUNCTION.prototype['new'] = function () {
         var instance, result;

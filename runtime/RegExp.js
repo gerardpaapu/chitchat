@@ -1,5 +1,5 @@
 (function () {
-    var CHITCHAT, STRING;
+    var CHITCHAT, REGEXP;
 
     if (typeof require == 'function') {
         CHITCHAT = require('./chitchat.js').CHITCHAT;
@@ -7,7 +7,6 @@
         CHITCHAT = window.CHITCHAT;
     }
 
-    STRING = CHITCHAT.builtins.String = function (obj) {
-        return String(obj);
-    };
-}.call(this));
+    REGEXP = CHITCHAT.builtins.RegExp = function () {};
+}.call(null));
+

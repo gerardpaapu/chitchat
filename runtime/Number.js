@@ -1,5 +1,13 @@
 (function () {
-    NUMBER = CHITCHAT.builtins.NUMBER = function (obj) { 
+    var CHITCHAT, NUMBER;
+
+    if (typeof require == 'function') {
+        CHITCHAT = require('./chitchat.js').CHITCHAT;
+    } else if (typeof window != 'undefined' && window.CHITCHAT) {
+        CHITCHAT = window.CHITCHAT;
+    }
+
+    NUMBER = CHITCHAT.builtins.Number = function (obj) { 
         return Number(obj); 
     }; 
 
@@ -32,11 +40,14 @@
     };
 
     // Bitwise 
-    OBJECT.prototype['&'] = function (obj) { return this & obj; };
-    OBJECT.prototype['|'] = function (obj) { return this | obj; };
-    OBJECT.prototype['^'] = function (obj) { return this ^ obj; };
-    OBJECT.prototype['>>'] = function (obj) { return this >> obj; };
-    OBJECT.prototype['<<'] = function (obj) { return this << obj; };
-    OBJECT.prototype['>>>'] = function (obj) { return this >>> obj; };
-    OBJECT.prototype['~'] = function () { return ~this; };
+    /*jshint bitwise: false */
+    /*
+    NUMBER.prototype['&'] = function (obj) { return this & obj; };
+    NUMBER.prototype['|'] = function (obj) { return this | obj; };
+    NUMBER.prototype['^'] = function (obj) { return this ^ obj; };
+    NUMBER.prototype['>>'] = function (obj) { return this >> obj; };
+    NUMBER.prototype['<<'] = function (obj) { return this << obj; };
+    NUMBER.prototype['>>>'] = function (obj) { return this >>> obj; };
+    NUMBER.prototype['~'] = function () { return ~this; };
+    */
 }.call(null));

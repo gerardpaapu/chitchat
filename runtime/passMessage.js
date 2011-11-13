@@ -1,7 +1,12 @@
-/*globals CHITCHAT: false */
 (function () {
     /*jshint eqnull: true */
-    var passMessage, getImplementation, defaults, type, isFunction, getShimForClass, getShimForValue, NULL;
+    var passMessage, getImplementation, defaults, type, isFunction, getShimForClass, getShimForValue, NULL, CHITCHAT;
+
+    if (typeof require == 'function') {
+        CHITCHAT = require('./chitchat.js').CHITCHAT;
+    } else if (typeof window != 'undefined' && window.CHITCHAT) {
+        CHITCHAT = window.CHITCHAT;
+    }
 
     NULL = new CHITCHAT.builtins.Null();
 

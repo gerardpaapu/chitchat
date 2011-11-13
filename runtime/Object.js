@@ -1,5 +1,12 @@
 (function () {
-    var OBJECT, Dummy;
+    var CHITCHAT, OBJECT, Dummy;
+
+    if (typeof require == 'function') {
+        CHITCHAT = require('./chitchat.js').CHITCHAT;
+    } else if (typeof window != 'undefined' && window.CHITCHAT) {
+        CHITCHAT = window.CHITCHAT;
+    }
+
     OBJECT = CHITCHAT.builtins.Object = function () {};
     Dummy = function () {};
 
@@ -46,6 +53,7 @@
     OBJECT.prototype['!'] = function () { return !this; };
     
     // Bitwise 
+    /*jshint bitwise: false */
     OBJECT.prototype['&'] = function (obj) { return this & obj; };
     OBJECT.prototype['|'] = function (obj) { return this | obj; };
     OBJECT.prototype['^'] = function (obj) { return this ^ obj; };

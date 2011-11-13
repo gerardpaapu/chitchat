@@ -1,5 +1,6 @@
+/*globals CHITCHAT */
 (function () {
-    var CHITCHAT, STRING;
+    var CHITCHAT, BOOLEAN;
 
     if (typeof require == 'function') {
         CHITCHAT = require('./chitchat.js').CHITCHAT;
@@ -7,7 +8,5 @@
         CHITCHAT = window.CHITCHAT;
     }
 
-    STRING = CHITCHAT.builtins.String = function (obj) {
-        return String(obj);
-    };
-}.call(this));
+    BOOLEAN = CHITCHAT.builtins.Boolean = function () {};
+}.call(null));
