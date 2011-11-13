@@ -98,13 +98,9 @@ compileList = function (list) {
         return keywords[list[0].value].apply(null, list.slice(1));
     }
 
-    var args_str = '';
-    if (list.length > 2) {
-        args_str = list.slice(2).map(function (exp) {
-            return ', ' + compile(exp);
-        });
-    }
-    return format('CHITCHAT.passMessage($0, $1$2)',
+    var args_str = list.slice(2).map(compile).join(', ');
+
+    return format('CHITCHAT.passMessage($0, $1, [$2])',
                   compile(list[0]),
                   compileMessage(list[1]),
                   args_str);
@@ -176,6 +172,7 @@ keywords = {
     },
 
     'var': function () {
+        throw new SyntaxError();
     }
 };
 
