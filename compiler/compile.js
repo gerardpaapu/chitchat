@@ -62,6 +62,7 @@ compileSymbol = function (symbol) {
     };
 
     src = symbol.value;
+    result = '';
 
     for (i = 0, max = src.length; i < max; i++) {
         ch = src.charAt(i);
