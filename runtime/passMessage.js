@@ -49,6 +49,10 @@
             return classShim.prototype[selector];
         }
 
+        if (selector in CHITCHAT.builtins.Object) {
+            return CHITCHAT.builtins.Object[selector]; 
+        }
+
         return null;
     };
 
