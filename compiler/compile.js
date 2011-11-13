@@ -28,7 +28,66 @@ compile = function (tree) {
 };
 
 compileSymbol = function (symbol) {
-    return symbol.value;
+    // These are the legal components of symbols in Chitchat
+    // - glyphs  '_-+=$&%@!?~`<>:|'
+    // - letters 'abcdefghijklmnopqrsutvwxyz'
+    // - digits  '1234567890'
+    //
+    // A symbol in chitchat is a glyph or letter followed by zero or more glyphs, letters, and numbers
+    // An Identifier can be any symbol that isn't a reserved word in Chitchat.
+    //
+    // These are the legal components of symbols in Javascript
+    // - glyphs '_$'
+    // - letters 'absdefghijklmnopqrstuvwxyz'
+    // - digits '1234567890'
+    //
+    // Because of this mismatch, the following characters must be escaped '-+=&%@!?~`<>:|'
+    var escapes, src, result, i, max, ch, reserved;
+    escapes = {
+        '_': '',
+        '-': 'minus',
+        '+': 'plus',
+        '=': 'equal',
+        '&': 'and',
+        '%': 'modulo',
+        '@': 'at',
+        '!': 'bang',
+        '?': 'question',
+        '~': 'tilde',
+        '`': 'grave',
+        '<': 'less',
+        '>': 'greater',
+        ':': 'colon',
+        '|': 'or'
+    };
+
+    src = symbol.value;
+
+    for (i = 0, max = src.length; i < max; i++) {
+        ch = src.charAt(i);
+        if (ch in escapes) {
+            result += '_' + escapes[ch] + '_';
+        } else {
+            result += ch;
+        }
+    }
+
+    // These words may not be used as identifiers in
+    // Javascript as specified in Ecma-262 7.6
+    reserved = [
+        'break', 'case', 'catch', 'continue', 'debugger', 
+        'default', 'delete', 'do', 'else', 'finally', 'for', 
+        'function', 'if', 'in', 'instanceof', 'new', 'return', 
+        'switch', 'this', 'throw', 'try', 'typeof', 'var', 'void', 
+        'while', 'with', 'class', 'enum', 'extends', 'super', 
+        'const', 'export', 'import', 'null', 'true', 'false'
+    ];   
+
+    if (reserved.indexOf(result) != -1) {
+        return '_$' + result;
+    } else {
+        return result;
+    }
 };
 
 compileList = function (list) {
