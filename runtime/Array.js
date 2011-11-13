@@ -11,6 +11,7 @@
         return new Array(obj);
     };
 
+    ARRAY.prototype.nth = function (n) { return this[n]; };
     /*
     ARRAY.prototype.map = function () {};
 
