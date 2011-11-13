@@ -63,7 +63,10 @@
         switch (NativeClass) {
             case Array: return CHITCHAT.builtins.Array;
             case Boolean: return CHITCHAT.builtins.Boolean;
+            case Date: return CHITCHAT.builtins.Date;
+            case Error: return CHITCHAT.builtins.Error;
             case Function: return CHITCHAT.builtins.Function;
+            case Math: return CHITCHAT.builtins.Math;
             case Number: return CHITCHAT.builtins.Number;
             case Object: return CHITCHAT.builtins.Object;
             case RegExp: return CHITCHAT.builtins.RegExp;
