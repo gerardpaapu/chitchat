@@ -13,11 +13,11 @@ exports.compile = function (str) {
 
 compile = function (tree) {
     switch (type(tree)) {
-        case 'number':
-        case 'string':
+        case 'Number':
+        case 'String':
             return JSON.stringify(tree);
 
-        case 'array':
+        case 'Array':
             return compileList(tree);
 
         default:
@@ -109,7 +109,7 @@ compileList = function (list) {
 compileMessage = function (message) {
     if (message instanceof Symbol) return compile(message.value);
 
-    if (type(message) == 'array' &&
+    if (type(message) == 'Array' &&
         message[0].value == "#MSG")
         return compile(message[1]);
 
@@ -124,7 +124,7 @@ keywords = {
                       compile(false_branch));
     },
 
-    'function': function (args) {
+    'function': function (args/*, body..., tail*/) {
         var tail = arguments.length < 2 ? null : arguments[arguments.length - 1],
             body = arguments.length < 3 ? null : slice(arguments, 1, -1),
             template, arg_s, body_s, tail_s;
@@ -138,13 +138,13 @@ keywords = {
             return compile(e) + ';\n';
         }).join(' ');
 
-        tail_s = tail && compile(tail);
+        tail_s = tail ? compile(tail) : '';
 
         template = body ? 'function ($0) {\n$1return$2;\n}'
-        : tail ? 'function ($0) { return $2; }'
-        : 'function ($0){}';
+                :  tail ? 'function ($0) { return $2; }'
+                :         'function ($0) {}';
 
-        return format(template, arg_s, body_s, tail_s || ''); 
+        return format(template, arg_s, body_s, tail_s); 
     },
 
     '#ARRAY': function () {
@@ -152,19 +152,15 @@ keywords = {
     },
 
     '#DICT': function () {
-        var args = slice(arguments), max = args.length, i, expr;
+        var args = slice(arguments), max, i, expr;
 
         if (max % 2 !== 0) throw new SyntaxError(); 
 
-        expr = '{';
-        
-        for (i = 0; i < max; i += 2) {
+        for (i = 0, max = args.length, expr = ''; i < max; i += 2) {
             expr += format('"$0": $1', args[i].value, compile(args[i + 1]));
         }
 
-        expr += '}';
-
-        return expr;
+        return format('{$0}', expr);
     },
 
     '#MSG': function () {
@@ -182,7 +178,7 @@ slice = function (arr, a, b) {
 
 type = function (obj) {
     return obj == null ? String(obj)
-    :  Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
+    :  Object.prototype.toString.call(obj).slice(8, -1);
 };
 
 format = function (template) {
