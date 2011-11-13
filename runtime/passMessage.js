@@ -14,7 +14,7 @@
         // If the receiver is null we coerce it to CHITCHAT.NULL_INSTANCE
         // So that we can still pass it a message
         receiver = (receiver != null) ? receiver : NULL;
-
+        //
         // The implementation is the concrete method that will handle the message
         // all the smoke and mirrors occur within `getImplementation`
         var implementation = getImplementation(receiver, selector);
@@ -32,38 +32,34 @@
     };
 
     CHITCHAT.getImplementation = getImplementation = function (receiver, selector) {
-        var fallback, OBJECT, ChitchatNative, implementation, accessor;
+        var valueShim, classShim;
 
-        ChitchatNative = getShimForClass(receiver);
-
-        receiver = (selector in receiver) ? receiver
-                :  (ChitchatNative && selector in ChitchatNative) ? ChitchatNative 
-                :  null;
-
-        if (receiver != null) {
-            // The receiver has a property called 'selector', if it is a method return that.
-            // otherwise generate an accessor and return that.
-            implementation = receiver[selector];
-            return isFunction(implementation) ? implementation : function () { return receiver[selector]; };
+        if (selector in receiver) {
+            return isFunction(receiver[selector]) ? receiver[selector]
+                : function () { return this[selector]; };
         }
 
-        // The receiver doesn't have an implementation for this message
-        // but we might have one in the shim for its native type    
-        // or the shim for Object
-        Fallback = getShimForValue(receiver);
-        OBJECT = CHITCHAT.builtins.Object;
+        valueShim = getShimForValue(receiver);
+        if (valueShim && selector in valueShim) {
+            return valueShim[selector];
+        }
 
-        return Fallback.prototype[selector] || OBJECT.prototype[selector] || null;
+        classShim = getShimForClass(receiver);
+        if (classShim && selector in classShim.prototype) {
+            return classShim.prototype[selector];
+        }
+
+        return null;
     };
 
-    type = function (obj) {
+    CHITCHAT.type = type = function (obj) {
         return obj === this ? 'Global'
             :  obj === undefined ? 'Undefined'
             :  obj === null || obj === CHITCHAT.NULL ? 'Null'
             :  Object.prototype.toString.call(obj).slice(8, -1); 
     };
 
-    CHITCHAT.getShimForClass = getShimForClass = function (NativeClass) {
+    CHITCHAT.getShimForValue = getShimForValue = function (NativeClass) {
         switch (NativeClass) {
             case Array: return CHITCHAT.builtins.Array;
             case Boolean: return CHITCHAT.builtins.Boolean;
@@ -76,7 +72,7 @@
         } 
     };
     
-    CHITCHAT.getShimForValue = getShimForValue = function (value) {
+    CHITCHAT.getShimForClass = getShimForClass = function (value) {
         return CHITCHAT.builtins[ type(value) ] || CHITCHAT.builtins.Object;
     };
 
