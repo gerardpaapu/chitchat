@@ -126,26 +126,44 @@ keywords = {
     },
 
     'function': function (args/*, body..., tail*/) {
-        var tail = arguments.length < 2 ? null : arguments[arguments.length - 1],
-            body = arguments.length < 3 ? null : slice(arguments, 1, -1),
-            template, arg_s, body_s, tail_s;
+        var _body = slice(arguments, 1),
+            body = [], vars = [], tail = null,
+            arg_s, vars_s, body_s, tail_s,
+            i, expr;
 
         arg_s = args.map(function (arg) {
             assert.ok(arg instanceof Symbol);
             return compileSymbol(arg);
         }).join(', ');
 
-        body_s = body && body.map(function (e) {
+        for (i = 0; i < _body.length; i++) {
+            expr = _body[i];
+
+            if (type(expr) === 'Array' &&
+                expr[0] instanceof Symbol &&
+                expr[0].value === 'var') {
+
+                [].push.apply(vars, _body[i].slice(1));
+            } else {
+                body.push(_body[i]);
+            }
+        }
+
+        if (body.length > 0) {
+            tail = body[body.length - 1];
+            body = body.slice(0, -1);
+        }
+
+        vars_s = vars.length === 0 ? ''
+            :  format('var $0;\n', vars.map(compileSymbol).join(', '));
+
+        body_s = body.length === 0 ? '' : body.map(function (e) {
             return compile(e) + ';\n';
         }).join(' ');
 
-        tail_s = tail ? compile(tail) : '';
+        tail_s = tail ? ' ' + compile(tail) : '';
 
-        template = body ? 'function ($0) {\n$1return$2;\n}'
-                :  tail ? 'function ($0) { return $2; }'
-                :         'function ($0) {}';
-
-        return format(template, arg_s, body_s, tail_s); 
+        return format('function ($0) {\n$1$2return$3;\n}', arg_s, vars_s, body_s, tail_s); 
     },
 
     '#ARRAY': function () {
