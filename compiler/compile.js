@@ -202,9 +202,9 @@ keywords = {
         assert.equal(place.length, 2);
         obj = place[0];
         msg = place[1];
-        key = (msg instanceof Symbol) ? msg.value : compile(msg[1]); 
+        key = (msg instanceof Symbol) ? msg.value : msg[1]; 
 
-        return format('$0["$1"] = $2', compile(obj), key, compile(value));
+        return format('$0[$1] = $2', compile(obj), compile(key), compile(value));
     }
 };
 
