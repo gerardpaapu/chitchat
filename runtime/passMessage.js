@@ -14,8 +14,8 @@
     CHITCHAT.passMessage = passMessage = function (receiver, selector, args) {
         // If the receiver is null we coerce it to CHITCHAT.NULL_INSTANCE
         // So that we can still pass it a message
-        receiver = (receiver != null) ? receiver : NULL;
-        //
+        receiver = toObject(receiver);
+        
         // The implementation is the concrete method that will handle the message
         // all the smoke and mirrors occur within `getImplementation`
         var implementation = getImplementation(receiver, selector);
@@ -95,5 +95,23 @@
 
     isFunction = function (obj) {
         return type(obj) === 'Function';
+    };
+
+    toObject = function (val) {
+        // Described in ECMA-262: Section 9.9
+        if (val === null ||
+            val === void 0) {
+            return NULL;
+        }
+
+        switch (typeof(val)) {
+            case "boolean":
+            case "string":
+            case "number":
+                return Object(val);
+
+            default:
+                return val;
+        }
     };
 }.call(this));
