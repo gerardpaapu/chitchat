@@ -49,9 +49,9 @@ Dot notation
 Square Bracket notation
 --
 
-    foo[0]            ; is a synonym for (foo @0)
+    foo[0]            ; is a synonym for (foo get 0)
     (set! foo[0] bar) ; is a synonym for (foo set 0 bar)
-    foo[bar]          ; is a synonym for (foo @bar)
+    foo[bar]          ; is a synonym for (foo get bar)
 
 Javascript Keywords 
 --
@@ -83,19 +83,14 @@ I heard that it's actually practical).
     213               ; 213
 
     ;; Function Literals
-    ;; -----------------
-    ;;
-    ;; These will definitely become lispier
-    ;; I have to be able to parse this mess
 
-    ^{ foo }          ; function () { return foo; }
-    ^(a b){ (a + b) } ; function (a, b) { return a + b; }
-    ^(a b)[ a + b ]   ; function (a, b) { return a + b; }
-    #(slice 0 1)      ; synonym for `^(a) [ a slice 0 1 ]`  
+    (function () foo) ; function () { return foo; }
+    { foo }           ; function () { return foo; }
+    #(a b){ (a + b) } ; function (a, b) { return a + b; }
 
-    ;; Also I think I'll probably include argument references. Why not
+    ;; Also I think I'll probably include positional argument references. Why not
 
-    ^{ (%1 + %2) }    ; function () { return arguments[1] + arguments[2]; }
+    { (#0 + #1) }    ; function () { return arguments[0] + arguments[1]; }
 
 Error Handling
 --
@@ -105,8 +100,8 @@ Error Handling
     (try/catch block block)
 
     (try/catch
-        ^{ (foo doSomething) }
-        ^(err) { (foo handle err) })
+        { (foo doSomething) }
+        #(err) { (foo handle err) })
 
     (try/catch/finally block block block)
 
@@ -118,20 +113,20 @@ Error Handling
         foo.cleanup();
     }
 
-    (try/catch/finally
-        {
-            @doSomething()
-        }
-        ^(err){ @handle(err) }
-        {
-            @foo(cleanup) 
-        })
-
 Iteration
 --
 
 In lou of a keyword, I think I'll implement looping in instance methods, e.g. map, filter, reduce 
 
-For more ad-hoc iteration, I can implement Function::repeatTill Function( -> Boolean) condition so that you can do
+For more ad-hoc iteration, I can implement Function#until(Function( -> Boolean) condition) so that you can do
 
-    ({ (set! i (i - 1)) } repeatTill { (i > 0) })
+    ({ (set! i (i - 1)) } until { (i > 0) })
+
+    CHITCHAT.builtins.Function.until = function (condition) {
+        var acc = [];
+        do {
+            acc.push(this());
+        } while (!condition());
+        return acc;
+    };
+
