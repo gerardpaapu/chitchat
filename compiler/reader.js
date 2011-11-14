@@ -160,6 +160,17 @@ read = function (str) {
     var tokens = tokenize(str);
     return parseExpr(tokens);
 };
-
 exports.read = read;
+
+exports.readAll = function (str) {
+    var exprs = [],
+        tokens = tokenize(str);
+
+    while (tokens.length > 0) {
+        exprs.push(parseExpr(tokens));
+    }
+
+    return exprs;
+};
+
 exports.Symbol = Symbol;

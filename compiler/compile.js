@@ -3,12 +3,15 @@ var compile, compileList, compileSymbol, keywords, format, type, slice, compileM
 
     R = require('./reader.js'),
     read = R.read,
+    readAll = R.readAll,
     Symbol = R.Symbol,
 
     assert = require('assert');
 
 exports.compile = function (str) {
-    return compile(read(str));
+    return readAll(str).map(function (s){
+        return compile(s) + ';';
+    }).join('\n');
 };
 
 compile = function (tree) {
