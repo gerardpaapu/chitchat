@@ -28,6 +28,13 @@ compile = function (tree) {
 };
 
 compileSymbol = function (symbol) {
+    // The following are keywords in ChitChat AND javascript
+    // so will be returned as-is
+    var shared = ["this", "null", "true", "false"];
+
+    if (shared.indexOf(symbol.value) != -1)
+        return symbol.value;
+
     // These are the legal components of symbols in Chitchat
     // - glyphs  '_-+=$&%@!?~`<>:|'
     // - letters 'abcdefghijklmnopqrsutvwxyz'
