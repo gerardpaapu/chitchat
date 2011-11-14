@@ -129,10 +129,27 @@ compileMessage = function (message) {
 
 keywords = {
     'if': function (test, true_branch, false_branch) {
-        return format('$0?$1:$2',
-                      compile(test),
-                      compile(true_branch),
-                      compile(false_branch));
+        var i, max, tail, result = '', args = slice(arguments);
+
+        if (args.length < 2) throw new SyntaxError();
+
+        if (args.length % 2 > 0) {
+            max = args.length - 2;
+            tail = compile(args[args.length - 1]);
+        } else {
+            max = args.length - 1;    
+            tail = 'null';
+        }
+
+        for (i = 0; i < max; i += 2) {
+            result += format('$0?$1:',
+                             compile(args[i]),
+                             compile(args[i + 1]));
+        }
+
+        result += tail;
+
+        return result;
     },
 
     'function': function (args/*, body..., tail*/) {
