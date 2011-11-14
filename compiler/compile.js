@@ -171,15 +171,15 @@ keywords = {
     },
 
     '#DICT': function () {
-        var args = slice(arguments), max, i, expr;
+        var args = slice(arguments), max = args.length, i, pairs = [];
 
         if (max % 2 !== 0) throw new SyntaxError(); 
 
-        for (i = 0, max = args.length, expr = ''; i < max; i += 2) {
-            expr += format('"$0": $1', args[i].value, compile(args[i + 1]));
+        for (i = 0; i < max; i += 2) {
+            pairs.push(format('"$0": $1', args[i].value, compile(args[i + 1])));
         }
 
-        return format('{$0}', expr);
+        return format('{$0}', pairs.join(', '));
     },
 
     '#MSG': function () {
