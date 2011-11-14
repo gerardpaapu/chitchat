@@ -102,12 +102,12 @@ compileSymbol = function (symbol) {
 };
 
 compileList = function (list) {
-    if (list.length < 2) throw new SyntaxError();
-
     if (list[0] instanceof Symbol &&
         list[0].value in keywords) {
         return keywords[list[0].value].apply(null, list.slice(1));
     }
+
+    if (list.length < 2) throw new SyntaxError();
 
     var args_str = list.slice(2).map(compile).join(', ');
 
@@ -225,8 +225,8 @@ keywords = {
         }
 
         assert.equal(type(place), 'Array');
-
         assert.equal(place.length, 2);
+
         obj = place[0];
         msg = place[1];
         key = (msg instanceof Symbol) ? msg.value : msg[1]; 
