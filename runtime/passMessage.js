@@ -1,6 +1,7 @@
 (function () {
     /*jshint eqnull: true */
-    var passMessage, getImplementation, defaults, type, isFunction, getShimForClass, getShimForValue, NULL, CHITCHAT, GLOBAL;
+    var passMessage, getImplementation, defaults, type, isFunction, toObject, getShimForClass, 
+        getShimForValue, NULL, CHITCHAT, GLOBAL;
 
     if (typeof require == 'function') {
         CHITCHAT = require('./chitchat.js').CHITCHAT;
