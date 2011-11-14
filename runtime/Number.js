@@ -39,6 +39,10 @@
         return total;
     };
 
+    NUMBER.prototype['zero?'] = function (obj) {
+        return this.valueOf() === 0;
+    };
+
     // Bitwise 
     /*jshint bitwise: false */
     /*

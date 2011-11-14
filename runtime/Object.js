@@ -102,6 +102,10 @@
         if (respondsTo(this, setter)) 
             return CHITCHAT.passMessage(this, setter, [key, value]);
 
-        return (obj[key] = value);
+        return (this[key] = value);
+    };
+
+    Object.prototype['null?'] = function () {
+        return this instanceof CHITCHAT.builtins.Null;
     };
 }());
