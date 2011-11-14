@@ -69,10 +69,9 @@
     OBJECT.prototype['instanceof'] = function (Constructor) { return this instanceof Constructor; };
     OBJECT.prototype['delete'] = function (key) { delete this[key]; return this; };
 
-
     // Properties
     respondsTo = function (receiver, selector) {
-        return CHITCHAT.getImplementation(this, key) != null; 
+        return CHITCHAT.getImplementation(receiver, selector) != null; 
     };
 
     capitalize = function (str) {
@@ -91,7 +90,7 @@
         if (respondsTo(this, accessor)) 
             return CHITCHAT.passMessage(this, accessor, [key]);
 
-        return obj[key]; 
+        return this[key]; 
     };
 
     OBJECT.prototype.set = function (key, value) {
