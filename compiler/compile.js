@@ -28,6 +28,13 @@ compile = function (tree) {
 };
 
 compileSymbol = function (symbol) {
+    // The following are keywords in ChitChat AND javascript
+    // so will be returned as-is
+    var shared = ["this", "null", "true", "false"];
+
+    if (shared.indexOf(symbol.value) != -1)
+        return symbol.value;
+
     // These are the legal components of symbols in Chitchat
     // - glyphs  '_-+=$&%@!?~`<>:|'
     // - letters 'abcdefghijklmnopqrsutvwxyz'
@@ -126,26 +133,44 @@ keywords = {
     },
 
     'function': function (args/*, body..., tail*/) {
-        var tail = arguments.length < 2 ? null : arguments[arguments.length - 1],
-            body = arguments.length < 3 ? null : slice(arguments, 1, -1),
-            template, arg_s, body_s, tail_s;
+        var _body = slice(arguments, 1),
+            body = [], vars = [], tail = null,
+            arg_s, vars_s, body_s, tail_s,
+            i, expr;
 
         arg_s = args.map(function (arg) {
             assert.ok(arg instanceof Symbol);
             return compileSymbol(arg);
         }).join(', ');
 
-        body_s = body && body.map(function (e) {
+        for (i = 0; i < _body.length; i++) {
+            expr = _body[i];
+
+            if (type(expr) === 'Array' &&
+                expr[0] instanceof Symbol &&
+                expr[0].value === 'var') {
+
+                [].push.apply(vars, _body[i].slice(1));
+            } else {
+                body.push(_body[i]);
+            }
+        }
+
+        if (body.length > 0) {
+            tail = body[body.length - 1];
+            body = body.slice(0, -1);
+        }
+
+        vars_s = vars.length === 0 ? ''
+            :  format('var $0;\n', vars.map(compileSymbol).join(', '));
+
+        body_s = body.length === 0 ? '' : body.map(function (e) {
             return compile(e) + ';\n';
         }).join(' ');
 
-        tail_s = tail ? compile(tail) : '';
+        tail_s = tail ? ' ' + compile(tail) : '';
 
-        template = body ? 'function ($0) {\n$1return$2;\n}'
-                :  tail ? 'function ($0) { return $2; }'
-                :         'function ($0) {}';
-
-        return format(template, arg_s, body_s, tail_s); 
+        return format('function ($0) {\n$1$2return$3;\n}', arg_s, vars_s, body_s, tail_s); 
     },
 
     '#ARRAY': function () {
@@ -153,15 +178,15 @@ keywords = {
     },
 
     '#DICT': function () {
-        var args = slice(arguments), max, i, expr;
+        var args = slice(arguments), max = args.length, i, pairs = [];
 
         if (max % 2 !== 0) throw new SyntaxError(); 
 
-        for (i = 0, max = args.length, expr = ''; i < max; i += 2) {
-            expr += format('"$0": $1', args[i].value, compile(args[i + 1]));
+        for (i = 0; i < max; i += 2) {
+            pairs.push(format('"$0": $1', args[i].value, compile(args[i + 1])));
         }
 
-        return format('{$0}', expr);
+        return format('{$0}', pairs.join(', '));
     },
 
     '#MSG': function () {
@@ -184,9 +209,9 @@ keywords = {
         assert.equal(place.length, 2);
         obj = place[0];
         msg = place[1];
-        key = (msg instanceof Symbol) ? msg.value : compile(msg[1]); 
+        key = (msg instanceof Symbol) ? msg.value : msg[1]; 
 
-        return format('$0["$1"] = $2', compile(obj), key, compile(value));
+        return format('$0[$1] = $2', compile(obj), compile(key), compile(value));
     }
 };
 

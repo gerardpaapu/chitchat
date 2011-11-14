@@ -1,6 +1,7 @@
 (function () {
     /*jshint eqnull: true */
-    var passMessage, getImplementation, defaults, type, isFunction, getShimForClass, getShimForValue, NULL, CHITCHAT;
+    var passMessage, getImplementation, defaults, type, isFunction, toObject, getShimForClass, 
+        getShimForValue, NULL, CHITCHAT, GLOBAL;
 
     if (typeof require == 'function') {
         CHITCHAT = require('./chitchat.js').CHITCHAT;
@@ -8,13 +9,14 @@
         CHITCHAT = window.CHITCHAT;
     }
 
+    GLOBAL = this;
     NULL = new CHITCHAT.builtins.Null();
 
     CHITCHAT.passMessage = passMessage = function (receiver, selector, args) {
         // If the receiver is null we coerce it to CHITCHAT.NULL_INSTANCE
         // So that we can still pass it a message
-        receiver = (receiver != null) ? receiver : NULL;
-        //
+        receiver = toObject(receiver);
+        
         // The implementation is the concrete method that will handle the message
         // all the smoke and mirrors occur within `getImplementation`
         var implementation = getImplementation(receiver, selector);
@@ -49,21 +51,37 @@
             return classShim.prototype[selector];
         }
 
+        if (selector in CHITCHAT.builtins.Object) {
+            return CHITCHAT.builtins.Object[selector]; 
+        }
+
         return null;
     };
 
     CHITCHAT.type = type = function (obj) {
-        return obj === this ? 'Global'
-            :  obj === undefined ? 'Undefined'
-            :  obj === null || obj === CHITCHAT.NULL ? 'Null'
-            :  Object.prototype.toString.call(obj).slice(8, -1); 
+        switch (obj) {
+            case GLOBAL:
+                return 'Global';
+
+            case void 0:
+                return 'Undefined';
+
+            case null:
+            case NULL: return 'Null';
+
+            default:
+                return Object.prototype.toString.call(obj).slice(8, -1); 
+        }
     };
 
     CHITCHAT.getShimForValue = getShimForValue = function (NativeClass) {
         switch (NativeClass) {
             case Array: return CHITCHAT.builtins.Array;
             case Boolean: return CHITCHAT.builtins.Boolean;
+            case Date: return CHITCHAT.builtins.Date;
+            case Error: return CHITCHAT.builtins.Error;
             case Function: return CHITCHAT.builtins.Function;
+            case Math: return CHITCHAT.builtins.Math;
             case Number: return CHITCHAT.builtins.Number;
             case Object: return CHITCHAT.builtins.Object;
             case RegExp: return CHITCHAT.builtins.RegExp;
@@ -78,5 +96,23 @@
 
     isFunction = function (obj) {
         return type(obj) === 'Function';
+    };
+
+    toObject = function (val) {
+        // Described in ECMA-262: Section 9.9
+        if (val === null ||
+            val === void 0) {
+            return NULL;
+        }
+
+        switch (typeof(val)) {
+            case "boolean":
+            case "string":
+            case "number":
+                return Object(val);
+
+            default:
+                return val;
+        }
     };
 }.call(this));

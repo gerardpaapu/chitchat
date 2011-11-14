@@ -10,7 +10,9 @@ var assert = require('assert'),
     '(function (a b) cats[0])',
     '(set! foo bar)',
     '(set! foo.bar baz)',
-    '(set! foo.bar.baz quux)'
+    '(set! foo.bar.baz quux)',
+    '(set! foo.bar[(baz + quux)] quuz)',
+    '(function (a b) (var c d e f) foo.bar (var g h))'
 ].forEach(function (src) {
     console.log(src);
     console.log( JSON.stringify( compile(src) ) );
