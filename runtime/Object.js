@@ -1,5 +1,5 @@
 (function () {
-    var CHITCHAT, OBJECT, Dummy, respondsTo, capitalize;
+    var CHITCHAT, OBJECT, Dummy, respondsTo, capitalize, valueOf;
 
     if (typeof require == 'function') {
         CHITCHAT = require('./chitchat.js').CHITCHAT;
@@ -8,6 +8,7 @@
     }
 
     OBJECT = CHITCHAT.builtins.Object = function () {};
+    valueOf = CHITCHAT.valueOf;
     Dummy = function () {};
 
     OBJECT.prototype.clone = function () {
@@ -28,14 +29,14 @@
     };
 
     // Comparison
-    OBJECT.prototype['=='] = function (obj) { return this == obj; };
-    OBJECT.prototype['==='] = function (obj) { return this === obj; };
-    OBJECT.prototype['!='] = function (obj) { return this != obj; };
-    OBJECT.prototype['!=='] = function (obj) { return this !== obj; };
+    OBJECT.prototype['=='] = function (obj) { return valueOf(this) == valueOf(obj); };
+    OBJECT.prototype['==='] = function (obj) { return valueOf(this) === valueOf(obj); };
+    OBJECT.prototype['!='] = function (obj) { return valueOf(this) != valueOf(obj); };
+    OBJECT.prototype['!=='] = function (obj) { return valueOf(this) !== valueOf(obj); };
+    OBJECT.prototype['>='] = function (obj) { return valueOf(this) >= valueOf(obj); };
+    OBJECT.prototype['<='] = function (obj) { return valueOf(this) <= valueOf(obj); };
     OBJECT.prototype['>'] = function (obj) { return this > obj; };
     OBJECT.prototype['<'] = function (obj) { return this < obj; };
-    OBJECT.prototype['>='] = function (obj) { return this >= obj; };
-    OBJECT.prototype['<='] = function (obj) { return this <= obj; };
 
     // Arithmetic
     // ----------
@@ -48,9 +49,9 @@
     OBJECT.prototype['%'] = function (obj) { return this % obj; };
 
     // Logical
-    OBJECT.prototype['&&'] = function (obj) { return this && obj; };
-    OBJECT.prototype['||'] = function (obj) { return this || obj; };
-    OBJECT.prototype['!'] = function () { return !this; };
+    OBJECT.prototype['&&'] = function (obj) { return valueOf(this) && valueOf(obj); };
+    OBJECT.prototype['||'] = function (obj) { return valueOf(this) || valueOf(obj); };
+    OBJECT.prototype['!'] = function () { return !valueOf(this); };
     
     // Bitwise 
     /*jshint bitwise: false */

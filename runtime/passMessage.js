@@ -1,6 +1,6 @@
 (function () {
     /*jshint eqnull: true */
-    var passMessage, getImplementation, defaults, type, isFunction, toObject, getShimForClass, 
+    var passMessage, getImplementation, defaults, type, isFunction, toObject, valueOf, getShimForClass, 
         getShimForValue, NULL, CHITCHAT, GLOBAL;
 
     if (typeof require == 'function') {
@@ -98,7 +98,7 @@
         return type(obj) === 'Function';
     };
 
-    toObject = function (val) {
+    CHITCHAT.toObject = toObject = function (val) {
         // Described in ECMA-262: Section 9.9
         if (val === null ||
             val === void 0) {
@@ -110,6 +110,31 @@
             case "string":
             case "number":
                 return Object(val);
+
+            default:
+                return val;
+        }
+    };
+
+    // Returns a canonical version of an object
+    // for equality, comparison and truthiness
+    // because in javascript the following facts
+    // are mental:
+    //
+    //  - Object(3) != 3 
+    //  - !Object(false) == false
+    // 
+    CHITCHAT.valueOf = valueOf = function (val) {
+        // Described in ECMA-262: Section 9.9
+        if (val == null || val === NULL) {
+            return null;
+        }
+
+        switch (typeof(val)) {
+            case "boolean":
+            case "string":
+            case "number":
+                return Object(val).valueOf();
 
             default:
                 return val;
