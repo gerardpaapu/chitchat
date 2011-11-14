@@ -1,6 +1,6 @@
 (function () {
     /*jshint eqnull: true */
-    var passMessage, getImplementation, defaults, type, isFunction, getShimForClass, getShimForValue, NULL, CHITCHAT;
+    var passMessage, getImplementation, defaults, type, isFunction, getShimForClass, getShimForValue, NULL, CHITCHAT, GLOBAL;
 
     if (typeof require == 'function') {
         CHITCHAT = require('./chitchat.js').CHITCHAT;
@@ -8,6 +8,7 @@
         CHITCHAT = window.CHITCHAT;
     }
 
+    GLOBAL = this;
     NULL = new CHITCHAT.builtins.Null();
 
     CHITCHAT.passMessage = passMessage = function (receiver, selector, args) {
@@ -57,10 +58,19 @@
     };
 
     CHITCHAT.type = type = function (obj) {
-        return obj === this ? 'Global'
-            :  obj === undefined ? 'Undefined'
-            :  obj === null || obj === CHITCHAT.NULL ? 'Null'
-            :  Object.prototype.toString.call(obj).slice(8, -1); 
+        switch (obj) {
+            case GLOBAL:
+                return 'Global';
+
+            case void 0:
+                return 'Undefined';
+
+            case null:
+            case NULL: return 'Null';
+
+            default:
+                return Object.prototype.toString.call(obj).slice(8, -1); 
+        }
     };
 
     CHITCHAT.getShimForValue = getShimForValue = function (NativeClass) {
