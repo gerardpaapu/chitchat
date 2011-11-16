@@ -1,5 +1,5 @@
 /*jshint eqnull: true */
-var compile, compileList, compileSymbol, keywords, format, type, slice, compileMessage,
+var compile, compileList, compileSymbol, keywords, format, type, slice, isMessage, compileMessage, compileFunctionBody,
 
     R = require('./reader.js'),
     read = R.read,
@@ -153,44 +153,16 @@ keywords = {
     },
 
     'function': function (args/*, body..., tail*/) {
-        var _body = slice(arguments, 1),
-            body = [], vars = [], tail = null,
-            arg_s, vars_s, body_s, tail_s,
-            i, expr;
+        var arg_s, body_s;
 
         arg_s = args.map(function (arg) {
             assert.ok(arg instanceof Symbol);
             return compileSymbol(arg);
         }).join(', ');
 
-        for (i = 0; i < _body.length; i++) {
-            expr = _body[i];
+        body_s = compileFunctionBody(slice(arguments, 1));
 
-            if (type(expr) === 'Array' &&
-                expr[0] instanceof Symbol &&
-                expr[0].value === 'var') {
-
-                [].push.apply(vars, _body[i].slice(1));
-            } else {
-                body.push(_body[i]);
-            }
-        }
-
-        if (body.length > 0) {
-            tail = body[body.length - 1];
-            body = body.slice(0, -1);
-        }
-
-        vars_s = vars.length === 0 ? ''
-            :  format('var $0;\n', vars.map(compileSymbol).join(', '));
-
-        body_s = body.length === 0 ? '' : body.map(function (e) {
-            return compile(e) + ';\n';
-        }).join(' ');
-
-        tail_s = tail ? ' ' + compile(tail) : '';
-
-        return format('function ($0) {\n$1$2return$3;\n}', arg_s, vars_s, body_s, tail_s); 
+        return format('function ($0) {\n$1\n}', arg_s, body_s); 
     },
 
     '#ARRAY': function () {
@@ -217,8 +189,14 @@ keywords = {
         throw new SyntaxError();
     },
 
+    'block': function () {
+        var template = "(function () {\n$0\n}.apply(this, (typeof arguments != 'undefined') ? arguments : []))";
+    },
+
     'set!': function (place, value) {
-        var obj, msg, key;
+        // (set! (foo bar) baz)        -> foo['bar'] = baz
+        // (set! (foo (#MSG bar)) baz) -> foo[bar] = baz
+        var obj, msg;
 
         if (place instanceof Symbol) {
             return format('$0 = $1', compile(place), compile(value));
@@ -229,10 +207,72 @@ keywords = {
 
         obj = place[0];
         msg = place[1];
-        key = (msg instanceof Symbol) ? msg.value : msg[1]; 
 
-        return format('$0[$1] = $2', compile(obj), compile(key), compile(value));
+        assert.ok(isMessage(msg));
+
+        return format('$0[$1] = $2', compile(obj), compileMessage(msg), compile(value));
+    },
+
+    'get!': function (place) {
+        // (get! (foo bar))        -> foo['bar']
+        // (get! (foo (#MSG exp))) -> foo[exp]
+        var obj, msg;
+
+        assert.equal(type(place), 'Array');
+        assert.equal(place.length, 2);
+        assert.ok(isMessage(place[1]));
+
+        obj = place[0];
+        msg = place[1];
+
+        return format('$0[$1]', compile(obj), compileMessage(msg));
     }
+};
+
+isMessage = function (expr) {
+    return expr instanceof Symbol ||
+           (type(expr) === 'Array' &&
+            expr.length === 2 && 
+            Symbol.MSG.equals(expr[0]) &&
+            expr[1] instanceof Symbol);
+};
+
+compileMessage = function (msg) {
+    return compile(msg instanceof Symbol ? msg.value : msg[1]); 
+};
+
+compileFunctionBody = function (_body) {
+    var body = [], vars = [], tail = null,
+        vars_s, body_s, tail_s, i, expr;
+
+    for (i = 0; i < _body.length; i++) {
+        expr = _body[i];
+
+        if (type(expr) === 'Array' &&
+            expr[0] instanceof Symbol &&
+            expr[0].value === 'var') {
+
+            [].push.apply(vars, _body[i].slice(1));
+        } else {
+            body.push(_body[i]);
+        }
+    }
+
+    if (body.length > 0) {
+        tail = body[body.length - 1];
+        body = body.slice(0, -1);
+    }
+
+    vars_s = vars.length === 0 ? ''
+        :  format('var $0;\n', vars.map(compileSymbol).join(', '));
+
+    body_s = body.length === 0 ? '' : body.map(function (e) {
+        return compile(e) + ';\n';
+    }).join(' ');
+
+    tail_s = tail ? ' ' + compile(tail) : '';
+
+    return format('$0$1return$2;', vars_s, body_s, tail_s);
 };
 
 slice = function (arr, a, b) {
