@@ -24,7 +24,7 @@ var read,
     T = require('./tokenizer.js'),
     TokenTypes = T.TokenTypes,
     tokenize = T.tokenize,
-    Symbol, ARRAY, DICT, MSG;
+    Symbol;
 
 Symbol = function (value) {
     this.value = value;

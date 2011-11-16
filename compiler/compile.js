@@ -1,5 +1,5 @@
 /*jshint eqnull: true */
-var compile, compileList, compileSymbol, keywords, format, type, slice, isMessage, compileMessage, compileFunctionBody,
+var compile, compileList, compileSymbol, keywords, format, type, slice, isMessage, compileMessage, compileFunctionBody, wrap,
 
     R = require('./reader.js'),
     read = R.read,
@@ -190,9 +190,41 @@ keywords = {
     },
 
     'block': function () {
-        var template = "(function () {\n$0\n}.apply(this, (typeof arguments != 'undefined') ? arguments : []))";
+        return wrap(compileFunctionBody( slice(arguments) ));
     },
 
+    'try': function (try_b, err, catch_b, finally_b) {
+        var templates = [
+            'try { return $0; } catch (err) { return null; }',
+            'try { return $0; } catch ($1) { return $2; }',
+            'try { $0 } catch ($1) { $2 } finally { return $3; }'
+        ]; 
+
+        switch (arguments.length) {
+            case 0: case 2:
+                throw new SyntaxError();
+
+            case 1:
+                return wrap(format(templates[0], compile(try_b)));
+
+            case 3:
+                assert.ok(err instanceof Symbol);
+                return wrap(format(templates[1],
+                              compile(try_b),
+                              compileSymbol(err),
+                              compile(catch_b)));
+
+            case 4:
+                assert.ok(err instanceof Symbol);
+                return wrap(format(templates[2],
+                              compile(try_b),
+                              compileSymbol(err),
+                              compile(catch_b),
+                              compile(finally_b)));
+        }
+    },
+
+    // set! and get! provide primitive access and assignment
     'set!': function (place, value) {
         // (set! (foo bar) baz)        -> foo['bar'] = baz
         // (set! (foo (#MSG bar)) baz) -> foo[bar] = baz
@@ -289,4 +321,9 @@ format = function (template) {
     return template.replace(/\$(\d+)/g, function (_, n) {
         return values[n];
     }); 
+};
+
+wrap = function (body) {
+    var template = "(function () {\n$0\n}.apply(this, (typeof arguments != 'undefined') ? arguments : []))";
+    return format(template, body);
 };
