@@ -224,8 +224,31 @@ keywords = {
         }
     },
 
+    'set': function (place, value) {
+        // (set foo bar)              -> foo = bar
+        // (set (foo bar) baz)        -> passMessage(foo, 'set', 'baz', baz)
+        // (set (foo (#MSG bar)) baz) -> passMessage(foo, 'set', bar, baz)
+        var obj, msg, key;
+
+        if (place instanceof Symbol) {
+            return format('$0 = $1', compile(place), compile(value));
+        }
+
+        assert.equal(type(place), 'Array');
+        assert.equal(place.length, 2);
+
+        obj = place[0];
+        msg = place[1];
+        key = type(msg) === 'Array' ? msg[1] : msg.value;
+
+        assert.ok(isMessage(msg));
+
+        return compile([obj, new Symbol('set'), key, value]);
+    },
+
     // set! and get! provide primitive access and assignment
     'set!': function (place, value) {
+        // (set foo bar)               -> foo = bar
         // (set! (foo bar) baz)        -> foo['bar'] = baz
         // (set! (foo (#MSG bar)) baz) -> foo[bar] = baz
         var obj, msg;
