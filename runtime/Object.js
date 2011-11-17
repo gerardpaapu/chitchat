@@ -49,9 +49,11 @@
     OBJECT.prototype['%'] = function (obj) { return this % obj; };
 
     // Logical
-    OBJECT.prototype['&&'] = function (obj) { return valueOf(this) && valueOf(obj); };
-    OBJECT.prototype['||'] = function (obj) { return valueOf(this) || valueOf(obj); };
-    OBJECT.prototype['!'] = function () { return !valueOf(this); };
+    OBJECT.prototype['&&'] = Object.prototype.and = function (obj) { return valueOf(this) && valueOf(obj); };
+    OBJECT.prototype['||'] = Object.prototype.or = function (obj) { return valueOf(this) || valueOf(obj); };
+    OBJECT.prototype['!'] = Object.prototype.not = function () { return !valueOf(this); };
+    OBJECT.prototype['false?'] = function () { return valueOf(this) === false; };
+    OBJECT.prototype['true?'] = function () { return valueOf(this) === true; };
     
     // Bitwise 
     /*jshint bitwise: false */
@@ -104,7 +106,14 @@
         return (this[key] = value);
     };
 
-    Object.prototype['null?'] = function () {
-        return this instanceof CHITCHAT.builtins.Null;
-    };
+
+    OBJECT.prototype['array?'] = function () { return CHITCHAT.type(this) === 'Array'; };
+    OBJECT.prototype['boolean?'] = function () { return CHITCHAT.type(this) === 'Boolean'; };
+    OBJECT.prototype['date?'] = function () { return CHITCHAT.type(this) === 'Date'; };
+    OBJECT.prototype['error?'] = function () { return CHITCHAT.type(this) === 'Error'; };
+    OBJECT.prototype['function?'] = function () { return CHITCHAT.type(this) === 'Function'; };
+    OBJECT.prototype['null?'] = function () { return this instanceof CHITCHAT.builtins.Null; };
+    OBJECT.prototype['number?'] = function () { return CHITCHAT.type(this) === 'Number'; };
+    OBJECT.prototype['regexp?'] = function () { return CHITCHAT.type(this) === 'RegExp'; };
+    OBJECT.prototype['string?'] = function () { return CHITCHAT.type(this) === 'String'; };
 }());
