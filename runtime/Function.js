@@ -13,10 +13,14 @@
         };
     };
 
-    FUNCTION.prototype.implement = function (obj) {
-        for (var k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) {
-            this.prototype[ k ] = obj[ k ];
-        } 
+    FUNCTION.implement = function (key, value) {
+        FUNCTION.prototype[key] = value;
+        return this;
+    };
+
+    FUNCTION.prototype.implement = function (key, value) {
+        this.prototype[key] = value;
+        return this;
     };
 
     /*

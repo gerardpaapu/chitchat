@@ -11,5 +11,8 @@
         return Date.apply(this, arguments); 
     };
     DATE.prototype = new Date();
-
+    DATE.extend = function (key, value) {
+        DATE.prototype[key] = value;
+        return this;
+    };
 }.call(null));

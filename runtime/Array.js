@@ -12,6 +12,11 @@
     };
 
     ARRAY.prototype.nth = function (n) { return this[n]; };
+    
+    ARRAY.implement = function (key, value) {
+        ARRAY.prototype[key] = value;
+        return this;
+    };
     /*
     ARRAY.prototype.map = function () {};
 

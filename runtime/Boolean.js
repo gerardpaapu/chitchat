@@ -9,4 +9,8 @@
     }
 
     BOOLEAN = CHITCHAT.builtins.Boolean = function () {};
+    BOOLEAN.implement = function (key, value) {
+        BOOLEAN.prototype[key] = value;
+        return this;
+    };
 }.call(null));

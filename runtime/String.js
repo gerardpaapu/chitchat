@@ -10,4 +10,9 @@
     STRING = CHITCHAT.builtins.String = function (obj) {
         return String(obj);
     };
+    STRING.prototype = new String();
+    STRING.implement = function (key, value) {
+        STRING.prototype[key] = value;
+        return this;
+    };
 }.call(this));

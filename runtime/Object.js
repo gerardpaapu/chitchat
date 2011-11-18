@@ -11,6 +11,11 @@
     valueOf = CHITCHAT.valueOf;
     Dummy = function () {};
 
+    OBJECT.implement = function (key, value) {
+        OBJECT.prototype[key] = value;
+        return this;
+    };
+
     OBJECT.prototype.clone = function () {
         Dummy.prototype = this;
         return new Dummy();

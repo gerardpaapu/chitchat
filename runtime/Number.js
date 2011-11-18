@@ -11,6 +11,11 @@
         return Number(obj); 
     }; 
 
+    NUMBER.implement = function (key, value) {
+        NUMBER.prototype[key] = value;
+        return this;
+    };
+
     NUMBER.prototype['+'] = function () { 
         var total = this, i = arguments.length;
 

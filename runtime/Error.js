@@ -11,5 +11,8 @@
         return Error.apply(this, arguments);
     };
     ERROR.prototype = new Error();
-
+    ERROR.implement = function (key, value) {
+        ERROR.prototype[key] = value;
+        return this;
+    };
 }.call(null));
