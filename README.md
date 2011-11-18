@@ -5,11 +5,80 @@ Chitchat is an language that runs on javascript and behaves similarly to javascr
 
 The difference is in that property access and method calls are treated identically i.e. as message passes.
 
-Also, messages to native types are intercepted under certain conditions to make it possible to do certain things:
+    > (foo bar) ; in the style of a Lisp function call
+    "you passed the message 'bar' to the object 'foo'"
 
-- Extend native types
-- Pass messages to `null`
-- Implement `methodMissing` or `doesNotUnderstand` (or whatever it's called) 
+    > foo.bar ; in the style of a javascript property accessor
+    "you passed the message 'bar' to the object 'foo'"
+
+Using and having control of the message passing means that ChitChat controls the runtime dispatch which means
+we can make some pretty exciting changes to the semantics of the language.
+
+  
+
+Extend native types
+--
+
+In javascript we can extend native types, but we don't because it's super evil, especially when you're sharing
+context with other libraries and scripts. 
+
+In Chitchat you can pass a message to a native `Array` and it can use the implementation on `ChitChat.builtins.Array`.
+
+    > (#[2 3 1] sortWithSelector "<")
+    [1, 2, 3]
+    
+Because of that, we can be a little (or a lot) more cavalier with extending builtin types because it will only affect us.
+    
+    > (Array implement "randomItem" { this[ (Math randomInteger 0 this.length) ] })
+    
+Pass messages to `null`
+--
+
+In javascript, trying to access any property or call any method on null is an error. In ChitChat most messages you pass to null
+will simply return null, so you can safely pass chains of messages to null as much as you like. 
+
+    > (null foo)
+    null
+
+    > null.foo.bar
+    null
+
+Though, there are a few useful exceptions
+
+    > null.null?
+    true
+
+    > null.length
+    0
+
+Treat Arguments like an Array
+--
+
+In javascript, we have to be a little bit careful with the `arguments` object, because it's *like* an
+array, but without all the methods. In Chitchat we convert an `arguments` object to an array when you
+pass a message to it. This means you can send any messages that are implemented on `Array` or `Chitchat.builtins.Array`
+
+
+methodMissing
+--
+
+In Ruby there's some really fun atrocities that you can commit using `method_missing`, we don't want to be left out of the fun in
+ChitChat, so if you pass an object a selector that hasn't been implemented, it will receive the message 'methodMissing' with the selector
+it got so that you can choose how to handle it. 
+
+    (PubSub implement "methodMissing"
+        ;; When we receive a mysterious message 
+        ;; check if we have any subscribers to the event
+        ;; of the same name and publish that event
+        (function (selector args) 
+            (if (this.handlers has selector) 
+                (this publish selector args)
+                (throw (NotImplementedError new)))))
+    
+Syntax
+======
+
+This document reflects the syntax as it currently exists.
 
 The syntax is lispish, because I'm super lazy.
 
