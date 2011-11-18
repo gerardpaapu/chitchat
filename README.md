@@ -164,23 +164,19 @@ I heard that it's actually practical).
 Error Handling
 --
 
-    (try body...)
+    (try attempt)
 
-    (try/catch block block)
+    (try attempt
+        err recover)
+    
+    (try attempt
+        err recover
+        finalize)
 
-    (try/catch
-        { (foo doSomething) }
-        #(err) { (foo handle err) })
-
-    (try/catch/finally block block block)
-
-    try {
-        foo.doSomething();
-    } catch (err) {
-        foo.handle(err);
-    } finally {
-        foo.cleanup();
-    }
+    (try
+        file.read 
+        err (console log "an error occured!" err)
+        file.close)
 
 Iteration
 --
