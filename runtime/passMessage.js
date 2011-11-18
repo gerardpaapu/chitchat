@@ -105,11 +105,14 @@
             return NULL;
         }
 
-        switch (typeof(val)) {
-            case "boolean":
-            case "string":
-            case "number":
+        switch (type(val)) {
+            case "Boolean":
+            case "String":
+            case "Number":
                 return Object(val);
+
+            case "Arguments":
+                return Array.prototype.slice.call(val);
 
             default:
                 return val;
