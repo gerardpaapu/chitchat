@@ -35,3 +35,20 @@ ARRAY.range = function (a, b, c) {
 
     return result;
 };
+ARRAY.prototype.nth = function (n) { return this[n]; };
+
+ARRAY.prototype.shuffled = function () {
+    if (this.length === 0) return [];
+
+    var i, j, dest = new Array(this.length);
+
+    dest[0] = this[0];
+
+    for (i = 1; i < this.length; i++) {
+        j = Math.floor(Math.random() * (i + 1));
+        dest[i] = dest[j];
+        dest[j] = this[i];
+    }
+
+    return dest;
+};
