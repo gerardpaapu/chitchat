@@ -1,0 +1,11 @@
+exports.Array = require('./Array.js').Array;
+exports.Boolean = require('./Boolean.js').Boolean;
+exports.Date = require('./Date.js').Date;
+exports.Error = require('./Error.js').Error;
+exports.Function = require('./Function.js').Function;
+exports.Math = require('./Math.js').Math;
+exports.Null = require('./Null.js').Null;
+exports.Number = require('./Number.js').Number;
+exports.Object = require('./Object.js').Object;
+exports.RegExp = require('./RegExp.js').RegExp;
+exports.String = require('./String.js').String;
