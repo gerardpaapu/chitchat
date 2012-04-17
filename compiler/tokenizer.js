@@ -25,23 +25,27 @@
         DOT: 'DOT',
         SYMBOL: 'SYMBOL',
         STRING: 'STRING',
-        OCTOTHORPE: 'OCTOTHORPE'
+        OCTOTHORPE: 'OCTOTHORPE',
+        CARET: 'CARET',
+        POSITIONAL_ARG: 'POSITIONAL_ARG'
     };
 
     SIMPLE_TOKENS = {
         OPEN_PAREN: '(', CLOSE_PAREN: ')',
         OPEN_BRACE: '{', CLOSE_BRACE: '}',
         OPEN_BRACKET: '[', CLOSE_BRACKET: ']',
-        OCTOTHORPE: '#', DOT: '.'
+        OCTOTHORPE: '#', DOT: '.', CARET: '^'
     };
 
     PATTERNS = {
         NUMBER: /^-?(0|([1-9]\d*))(\.\d+)?((e|E)(\+|\-)\d+)?/,
-        SYMBOL: /^[a-zA-Z\-_+=$&%@!?~`<>:|][0-9a-zA-Z\-_+=$&%@!?~`<>:|]*/
+        SYMBOL: /^[a-zA-Z\-_+=$&%@!?~`<>:|][0-9a-zA-Z\-_+=$&%@!?~`<>:|]*/,
+        POSITIONAL_ARG: /^#\d+/
     };
 
     escape_table = {
         '"': '"',
+        '\'': '\'',
         '\\': '\\',
         b: '\b',
         f: '\f',
@@ -67,6 +71,7 @@
             case ' ':
             case '\t':
             case '\n':
+            case ',':
                 return i + 1;
 
             // comments begin with ';' and continue to the end of the line
@@ -74,8 +79,23 @@
                 while (str.charAt(i) != '\n') i++;
                 return i + 1;
 
+            case "'":
+                // read single-quote string
+                return readString(tokens, str, i, "'");
+
             case '"':
-                return readString(tokens, str, i);
+                // read double-quote string
+                return readString(tokens, str, i, '"');
+
+            case '#':
+                // read positional arguments
+                match = new RegExp(PATTERNS.POSITIONAL_ARG.source).exec(str.slice(i));
+
+                if (match && match.index === 0) {
+                    end = i + match[0].length;
+                    tokens.push({ type: TokenTypes.POSITIONAL_ARG, value: match[0], position: [i, end] });
+                    return end;
+                }
         }
 
         for (key in SIMPLE_TOKENS) if (SIMPLE_TOKENS.hasOwnProperty(key)) {
@@ -85,7 +105,7 @@
             slice = str.slice(i, end); 
 
             if (slice === SIMPLE_TOKENS[key]) {
-                tokens.push({ type: TokenTypes[key] });
+                tokens.push({ type: TokenTypes[key], position: [i, end] });
                 return end;
             }
         }
@@ -97,19 +117,21 @@
 
             match = new RegExp(PATTERNS[key].source).exec(head);
 
-            if (match && match.index === 0) {
-                tokens.push({ type: TokenTypes[key], value: match[0]});
-                return i + match[0].length; 
+            if (match && match.index === 0 && match.length > 0) {
+                end = i + match[0].length; 
+                tokens.push({ type: TokenTypes[key], value: match[0], position: [i, end] });
+
+                return end;
             }
         }
 
-        throw new Error("Couldn't tokenize " + str + " @ " + i + "'" + char + "'");
+        throw new Error("Couldn't tokenize " + str + " @ " + i + " '" + char + "'");
     };
 
-    readString = function (tokens, str, i) {
+    readString = function (tokens, str, i, delimiter) {
         var code, code_point, start = i, value = '';
 
-        assert(str.charAt(i++) === '"');
+        assert(str.charAt(i++) === delimiter);
 
         while (i < str.length) {
             switch (str.charAt(i)) {
@@ -125,15 +147,16 @@
                     }
                 break;
 
-                case '"':
-                    tokens.push({ type: TokenTypes.STRING, value: value });
-                    return i + 1;
+                case delimiter:
+                    i++;
+                    tokens.push({ type: TokenTypes.STRING, value: value, position: [start, i] });
+                    return i;
 
                 default:
                     value += str.charAt(i++);
             }
         }
 
-        throw new Error("unexpected EOF in string starting at " + i);
+        throw new Error("Unexpected EOF in string starting at " + start);
     };
 }());

@@ -5,6 +5,7 @@ var FUNCTION = function (foo) {
 };
 
 exports.Function = FUNCTION;
+
 FUNCTION.prototype = function (){};
 
 FUNCTION.implement = function (key, value) {

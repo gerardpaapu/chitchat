@@ -174,6 +174,7 @@ keywords = {
         if (max % 2 !== 0) throw new SyntaxError(); 
 
         for (i = 0; i < max; i += 2) {
+            assert.ok(args[i] instanceof Symbol);
             pairs.push(format('"$0": $1', args[i].value, compile(args[i + 1])));
         }
 

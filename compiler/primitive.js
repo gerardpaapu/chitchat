@@ -19,7 +19,7 @@ primitives = {
     },
 
     'function': function (stx, env, compile) {
-
+        return format('function ($0) { $1;\nreturn $2; }');
     },
 
     'if': function (stx, env, compile) {
