@@ -1,6 +1,8 @@
 Chitchat - Message passing in Javascript
 ==
 
+TODO: Update to reflect new syntax
+
 Chitchat is an language that runs on javascript and behaves similarly to javascript.
 
 The difference is in that property access and method calls are treated identically i.e. as message passes.
@@ -29,7 +31,7 @@ In Chitchat you can pass a message to a native `Array` and it can use the implem
     
 Because of that, we can be a little (or a lot) more cavalier with extending builtin types because it will only affect us.
     
-    > (Array implement "randomItem" { this[ (Math randomInteger 0 this.length) ] })
+    > (Array implement "randomItem" ^this[ (Math randomInteger 0 this.length) ])
     
 Pass messages to `null`
 --
@@ -63,14 +65,13 @@ methodMissing
 --
 
 In Ruby there's some really fun atrocities that you can commit using `method_missing`, we don't want to be left out of the fun in
-ChitChat, so if you pass an object a selector that hasn't been implemented, it will receive the message 'methodMissing' with the selector
-it got so that you can choose how to handle it. 
+ChitChat, so if you pass an object a selector that hasn't been implemented, it will receive the message 'methodMissing' with the selector it got so that you can choose how to handle it. 
 
-    (PubSub implement "methodMissing"
+    (PubSub implement 'methodMissing'
         ;; When we receive a mysterious message 
         ;; check if we have any subscribers to the event
         ;; of the same name and publish that event
-        (function (selector args) 
+        (function [selector args] 
             (if (this.handlers has selector) 
                 (this publish selector args)
                 (throw (NotImplementedError new)))))
@@ -118,9 +119,11 @@ Dot notation
 Square Bracket notation
 --
 
-    foo[0]            ; is a synonym for (foo get 0)
-    (set! foo[0] bar) ; is a synonym for (foo set 0 bar)
-    foo[bar]          ; is a synonym for (foo get bar)
+    foo.[0]            ; is a synonym for (foo get 0)
+                       ; integers should get routed to (foo nth i)
+
+    (set! foo.[0] bar) ; is a synonym for (foo set 0 bar)
+    foo.[bar]          ; is a synonym for (foo get bar)
 
 Javascript Keywords 
 --
@@ -153,13 +156,13 @@ I heard that it's actually practical).
 
     ;; Function Literals
 
-    (function () foo) ; function () { return foo; }
-    { foo }           ; function () { return foo; }
-    #(a b){ (a + b) } ; function (a, b) { return a + b; }
+    (function [] foo) ; function () { return foo; }
+    ^foo              ; function () { return foo; }
+    ^[a b](a + b)     ; function (a, b) { return a + b; }
 
     ;; Also I think I'll probably include positional argument references. Why not
 
-    { (#0 + #1) }    ; function () { return arguments[0] + arguments[1]; }
+    ^(#0 + #1)        ; function () { return arguments[0] + arguments[1]; }
 
 Error Handling
 --
@@ -167,25 +170,24 @@ Error Handling
     (try attempt)
 
     (try attempt
-        err recover)
+        [err] recover)
     
     (try attempt
-        err recover
+        [err] recover
         finalize)
 
-    (try
-        file.read 
-        err (console log "an error occured!" err)
-        file.close)
+    (try (file read)
+        [err] (console log "an error occured!" err)
+        (file close))
 
 Iteration
 --
 
 In lou of a keyword, I think I'll implement looping in instance methods, e.g. map, filter, reduce 
 
-For more ad-hoc iteration, I can implement Function#until(Function( -> Boolean) condition) so that you can do
+For more ad-hoc iteration, I can implement Function#until(Function(() -> Boolean) condition) so that you can do
 
-    ({ (set! i (i - 1)) } until { (i > 0) })
+    (^(set! i (i - 1)) until ^(i > 0))
 
     CHITCHAT.builtins.Function.until = function (condition) {
         var acc = [];

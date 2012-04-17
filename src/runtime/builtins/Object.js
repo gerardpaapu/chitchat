@@ -37,6 +37,7 @@ OBJECT.prototype['!='] = function (obj) { return valueOf(this) != valueOf(obj); 
 OBJECT.prototype['!=='] = function (obj) { return valueOf(this) !== valueOf(obj); };
 OBJECT.prototype['>='] = function (obj) { return valueOf(this) >= valueOf(obj); };
 OBJECT.prototype['<='] = function (obj) { return valueOf(this) <= valueOf(obj); };
+// TODO I'm not sure why these don't use valueOf
 OBJECT.prototype['>'] = function (obj) { return this > obj; };
 OBJECT.prototype['<'] = function (obj) { return this < obj; };
 
@@ -51,8 +52,12 @@ OBJECT.prototype['/'] = function (obj) { return this / obj; };
 OBJECT.prototype['%'] = function (obj) { return this % obj; };
 
 // Logical
+
+// TODO '&&' and '||' should probably be removed because they won't short-circuit
+//      as expected, use (and foo bar), (or foo bar) instead of (foo && bar), (foo || bar)
 OBJECT.prototype['&&'] = Object.prototype.and = function (obj) { return valueOf(this) && valueOf(obj); };
 OBJECT.prototype['||'] = Object.prototype.or = function (obj) { return valueOf(this) || valueOf(obj); };
+
 OBJECT.prototype['!'] = Object.prototype.not = function () { return !valueOf(this); };
 OBJECT.prototype['false?'] = function () { return valueOf(this) === false; };
 OBJECT.prototype['true?'] = function () { return valueOf(this) === true; };

@@ -22,6 +22,12 @@ foo.["bar"]
 (foo bar)
 (foo ~"bar")
 
+Primitive Access
+--
+
+foo:bar ; translates to the javascript 'foo.bar' 
+Foo::bar ; translates to the javascript 'Foo.prototype.bar'
+
 Blocks
 --
 
