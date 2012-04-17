@@ -1,6 +1,5 @@
 /*jshint eqnull: true */
 var compile, compileList, compileSymbol, keywords, format, type, slice, isMessage, compileMessage, compileFunctionBody, wrap,
-
     R = require('./reader.js'),
     read = R.read,
     readAll = R.readAll,

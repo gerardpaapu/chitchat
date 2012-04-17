@@ -13,7 +13,6 @@
 // literal := number | string | array | dict
 // array   := '#[' expr* ']'  
 // dict    := '#{' [ symbol expr ]* '}'
-
 var read,
     parseExpr, parseExpr_,
     parseList,

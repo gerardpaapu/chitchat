@@ -1,7 +1,11 @@
-var OBJECT, Dummy, respondsTo, capitalize, valueOf;
+var OBJECT, Dummy, respondsTo, capitalize, valueOf, classString, passMessage, Null;
 
-OBJECT = exports.Object = function () {};
+passMessage = require('../passMessage.js').passMessage;
+respondsTo = require('../passMessage.js').respondsTo; 
 valueOf = require('../valueOf.js').valueOf;
+Null = require('./Null.js').Null;
+classString = require('../classString.js').classString;
+OBJECT = exports.Object = function () {};
 Dummy = function () {};
 
 OBJECT.implement = function (key, value) {
@@ -70,10 +74,6 @@ OBJECT.prototype['instanceof'] = function (Constructor) { return this instanceof
 OBJECT.prototype['delete'] = function (key) { delete this[key]; return this; };
 
 // Properties
-respondsTo = function (receiver, selector) {
-    return CHITCHAT.getImplementation(receiver, selector) != null; 
-};
-
 capitalize = function (str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
@@ -83,34 +83,33 @@ OBJECT.prototype.respondsTo = function (key) {
 };
 
 OBJECT.prototype.get = function (key) {
-    if (CHITCHAT.type(key) === 'Number' && respondsTo(this, 'nth')) 
-        return CHITCHAT.passMessage(this, 'nth', [key]);
+    if (classString(key) === 'Number' && respondsTo(this, 'nth')) 
+        return passMessage(this, 'nth', [key]);
 
     var accessor = 'get' + capitalize(key); 
     if (respondsTo(this, accessor)) 
-        return CHITCHAT.passMessage(this, accessor, [key]);
+        return passMessage(this, accessor, [key]);
 
     return this[key]; 
 };
 
 OBJECT.prototype.set = function (key, value) {
-    if (CHITCHAT.type(key) === 'Number' && respondsTo(this, 'setNth'))
-        return CHITCHAT.passMessage(this, 'setNth', [key, value]);
+    if (classString(key) === 'Number' && respondsTo(this, 'setNth'))
+        return passMessage(this, 'setNth', [key, value]);
 
     var setter = 'set' + capitalize(key);
     if (respondsTo(this, setter)) 
-        return CHITCHAT.passMessage(this, setter, [key, value]);
+        return passMessage(this, setter, [key, value]);
 
     return (this[key] = value);
 };
 
-
-OBJECT.prototype['array?'] = function () { return CHITCHAT.type(this) === 'Array'; };
-OBJECT.prototype['boolean?'] = function () { return CHITCHAT.type(this) === 'Boolean'; };
-OBJECT.prototype['date?'] = function () { return CHITCHAT.type(this) === 'Date'; };
-OBJECT.prototype['error?'] = function () { return CHITCHAT.type(this) === 'Error'; };
-OBJECT.prototype['function?'] = function () { return CHITCHAT.type(this) === 'Function'; };
-OBJECT.prototype['null?'] = function () { return this instanceof CHITCHAT.builtins.Null; };
-OBJECT.prototype['number?'] = function () { return CHITCHAT.type(this) === 'Number'; };
-OBJECT.prototype['regexp?'] = function () { return CHITCHAT.type(this) === 'RegExp'; };
-OBJECT.prototype['string?'] = function () { return CHITCHAT.type(this) === 'String'; };
+OBJECT.prototype['array?'] = function () { return classString(this) === 'Array'; };
+OBJECT.prototype['boolean?'] = function () { return classString(this) === 'Boolean'; };
+OBJECT.prototype['date?'] = function () { return classString(this) === 'Date'; };
+OBJECT.prototype['error?'] = function () { return classString(this) === 'Error'; };
+OBJECT.prototype['function?'] = function () { return classString(this) === 'Function'; };
+OBJECT.prototype['null?'] = function () { return this instanceof Null; };
+OBJECT.prototype['number?'] = function () { return classString(this) === 'Number'; };
+OBJECT.prototype['regexp?'] = function () { return classString(this) === 'RegExp'; };
+OBJECT.prototype['string?'] = function () { return classString(this) === 'String'; };

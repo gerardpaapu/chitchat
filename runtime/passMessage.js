@@ -4,6 +4,7 @@ var classString = require('./classString.js').classString,
     valueOf = require('./valueOf.js').valueOf,
     builtins = require('./builtins/index.js'),
     passMessage,
+    respondsTo,
     getImplementation,
     isFunction,
     getShimForClass, 
@@ -29,6 +30,10 @@ passMessage = exports.passMessage = function (receiver, selector, args) {
     throw new Error('methodMissing implementation not found');
 };
 
+respondsTo = exports.respondsTo = function (receiver, selector) {
+    return getImplementation(receiver, selector) != null;
+};
+
 getImplementation = function (receiver, selector) {
     var valueShim, classShim;
 
@@ -47,8 +52,8 @@ getImplementation = function (receiver, selector) {
         return classShim.prototype[selector];
     }
 
-    if (selector in builtins.Object) {
-        return builtins.Object[selector]; 
+    if (selector in builtins.Object.prototype) {
+        return builtins.Object.prototype[selector]; 
     }
 
     return null;

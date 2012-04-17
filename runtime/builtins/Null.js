@@ -1,4 +1,5 @@
-var NULL = exports.Null = function () {
+var instance, NULL;
+NULL = exports.Null = function () {
     if (instance == null) instance = this;
     return instance;
 };

@@ -1,5 +1,5 @@
 var NULL = (require('./builtins/Null.js').Null)(),
-    classString = require('./classString.js'),
+    classString = require('./classString.js').classString,
     slice = Array.prototype.slice,
     toObject;
 
