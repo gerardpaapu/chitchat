@@ -13,6 +13,7 @@
 // literal := number | string | array | dict
 // array   := '#[' expr* ']'  
 // dict    := '#{' [ symbol expr ]* '}'
+throw new Error('Out of date');
 var read,
     parseExpr, parseExpr_,
     parseList,

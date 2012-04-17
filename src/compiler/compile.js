@@ -7,6 +7,8 @@ var compile, compileList, compileSymbol, keywords, format, type, slice, isMessag
 
     assert = require('assert');
 
+throw new Error('Not compatible with the tokenizer');
+
 exports.compile = function (str) {
     return readAll(str).map(function (s){
         return compile(s) + ';';
