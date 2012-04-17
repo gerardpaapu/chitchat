@@ -1,5 +1,5 @@
 var read = require('fs').readFileSync,
-    tokenize = require('./compiler/tokenizer.js').tokenize,
+    tokenize = require('../compiler/tokenizer.js').tokenize,
     src, tokens, html, src_position, i, max, token;
 
 src = '';
