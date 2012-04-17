@@ -1,4 +1,0 @@
-(class JSONP
-    send (fn ()
-             )
-    )
