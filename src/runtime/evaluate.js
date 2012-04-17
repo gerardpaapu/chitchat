@@ -3,7 +3,5 @@ var CHITCHAT = require('./index.js'),
 
 exports.run = function (src) {
     var js = compile(src);
-    console.log(src);
-    console.log(js);
     return eval(js);
 };

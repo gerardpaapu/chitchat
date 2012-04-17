@@ -1,8 +1,8 @@
 /*globals module: false */
 var assert = require('assert'),
     vows = require('vows'),
-    passMessage = require('../runtime/passMessage.js').passMessage,
-    classString = require('../runtime/classString.js').classString;
+    passMessage = require('../src/runtime/passMessage.js').passMessage,
+    classString = require('../src/runtime/classString.js').classString;
 
 vows.describe('Passing Messages to builtins').addBatch({
     'Slice the arguments object': {
