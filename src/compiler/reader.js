@@ -1,46 +1,57 @@
 // CHITCHAT GRAMMAR
 // ================
+// module := expr+
+//
 // expr := expr' rest
 //
-// expr' := '(' expr* ')'
+// expr' := '(' expr message expr* ')'
+//       := '(' symbol expr* ')'
+//       := '{' expr* '}'
 //       := symbol
 //       := literal
 //
+// message := symbol
+//         := '~' expr ; should I get rid of this?
+//         := '(' 'message' expr ')' 
+//
 // rest := '.' symbol rest
-//      := '[' expr ']' rest
+//      := '.' '[' expr ']' rest
+//      := ':' symbol rest
+//      := ':' '[' expr ']' rest
 //      := epsilon
 //
-// literal := number | string | array | dict
-// array   := '#[' expr* ']'  
-// dict    := '#{' [ symbol expr ]* '}'
+// literal  := number | string | array | dict | function | letexpr
+//
+// array    := '#[' expr* ']'  
+//
+// dict     := '#{' [ symbol expr ]* '}'
+//
+// function := '^' '[' [ symbol ]* ']' expr
+//          := '^' expr
+//          := '(' 'function' '[' symbol ']' expr* ')' 
+//
+// letexpr  := '(' 'let' '[' binding* ']' expr* ')'
+//
+// binding  := symbol | '(' symbol expr ')'
 throw new Error('Out of date');
+
 var read,
     parseExpr, parseExpr_,
     parseList,
     parseRest, parseDotAcessor, parseBracketAccessor,
     parseLiteral, parseArray, parseDict,
+    parseColonAccessor, parseDoubleColonAccessor, parseFunctionLiteral,
 
     assert = require('assert'),
-    T = require('./tokenizer.js'),
-    TokenTypes = T.TokenTypes,
-    tokenize = T.tokenize,
-    Symbol;
+    TokenTypes = require('./tokenizer.js').TokenTypes,
+    tokenize = require('./tokenizer.js').tokenize,
+    Symbol = require('./symbol.js').Symbol,
+    Syntax = require('./syntax.js').Syntax;
 
-Symbol = function (value) {
-    this.value = value;
-};
-
-Symbol.prototype.toString = function () {
-    return '<' + this.value + '>';
-};
-
-Symbol.prototype.equals = function (sym) {
-    return sym instanceof Symbol && this.value === sym.value;
-};
-
-Symbol.ARRAY = new Symbol('#ARRAY');
-Symbol.DICT = new Symbol('#DICT');
-Symbol.MSG = new Symbol('#MSG');
+Symbol.ARRAY    = new Symbol('#ARRAY', true);
+Symbol.DICT     = new Symbol('#DICT', true);
+Symbol.MSG      = new Symbol('#MSG', true);
+Symbol.BINDINGS = new Symbol('#MSG', true);
 
 parseExpr = function (tokens) {
     return parseRest(tokens, parseExpr_(tokens));
@@ -60,6 +71,9 @@ parseExpr_ = function (tokens) {
         case TokenTypes.STRING:
             return tokens.shift().value;
 
+        case TokenTypes.CARET:
+            return parseFunctionLiteral(tokens);
+
         case TokenTypes.OCTOTHORPE:
             return parseLiteral(tokens);
     }
@@ -72,8 +86,11 @@ parseRest = function (tokens, root) {
         case TokenTypes.DOT:
             return parseDotAcessor(tokens, root);
 
-        case TokenTypes.OPEN_BRACKET:
-            return parseBracketAccessor(tokens, root);
+        case TokenTypes.DOUBLE_COLON:
+            return parseDoubleColonAccessor(tokens, root);
+
+        case TokenTypes.COLON:
+            return parseColonAccessor(tokens, root);
 
         default:
             return root;
@@ -81,11 +98,24 @@ parseRest = function (tokens, root) {
 };
 
 parseDotAcessor = function (tokens, root) {
+    throw new Error('Fix for foo.[bar] syntax');
     assert.equal(tokens.shift().type, TokenTypes.DOT);
     assert.equal(tokens[0].type, TokenTypes.SYMBOL);
     var msg = new Symbol(tokens.shift().value);
 
     return parseRest(tokens, [root, msg]);
+};
+
+parseColonAccessor = function (tokens, root) {
+    throw new Error('Not Implemented');
+};
+
+parseNewColonAccessor = function (tokens, root) {
+    throw new Error('Not Implemented');
+};
+
+parseFunctionLiteral = function (tokens, root) {
+    throw new Error('Not Implemented');
 };
 
 parseBracketAccessor = function (tokens, root) {
@@ -160,6 +190,7 @@ read = function (str) {
     var tokens = tokenize(str);
     return parseExpr(tokens);
 };
+
 exports.read = read;
 
 exports.readAll = function (str) {
@@ -172,5 +203,3 @@ exports.readAll = function (str) {
 
     return exprs;
 };
-
-exports.Symbol = Symbol;

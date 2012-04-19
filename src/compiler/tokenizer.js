@@ -7,7 +7,9 @@ var tokenize,
     escape_table,
     assert,
     SIMPLE_TOKENS,
-    PATTERNS;
+    PATTERNS,
+    Token = require('./syntax.js').Token,
+    Span = require('./syntax.js').Span;
 
 assert = function (exp, msg) {
     if (!exp) throw new Error(msg || "assertion failed");
@@ -26,14 +28,18 @@ exports.TokenTypes = TokenTypes = {
     STRING: 'STRING',
     OCTOTHORPE: 'OCTOTHORPE',
     CARET: 'CARET',
-    POSITIONAL_ARG: 'POSITIONAL_ARG'
+    POSITIONAL_ARG: 'POSITIONAL_ARG',
+    DOUBLE_COLON: 'DOUBLE_COLON',
+    COLON: 'COLON'
 };
 
 SIMPLE_TOKENS = {
     OPEN_PAREN: '(', CLOSE_PAREN: ')',
     OPEN_BRACE: '{', CLOSE_BRACE: '}',
     OPEN_BRACKET: '[', CLOSE_BRACKET: ']',
-    OCTOTHORPE: '#', DOT: '.', CARET: '^'
+    OCTOTHORPE: '#', DOT: '.',
+    DOUBLE_COLON: '::', COLON: ':',
+    CARET: '^'
 };
 
 PATTERNS = {
@@ -92,7 +98,7 @@ readToken = function (tokens, str, i) {
 
             if (match && match.index === 0) {
                 end = i + match[0].length;
-                tokens.push({ type: TokenTypes.POSITIONAL_ARG, value: match[0], position: [i, end] });
+                tokens.push(new Token(TokenTypes.POSITIONAL_ARG, new Span(i, end), match[0]));
                 return end;
             }
     }
@@ -104,7 +110,7 @@ readToken = function (tokens, str, i) {
         slice = str.slice(i, end); 
 
         if (slice === SIMPLE_TOKENS[key]) {
-            tokens.push({ type: TokenTypes[key], position: [i, end] });
+            tokens.push(new Token(TokenTypes[key], new Span(i, end)));
             return end;
         }
     }
@@ -118,7 +124,7 @@ readToken = function (tokens, str, i) {
 
         if (match && match.index === 0 && match.length > 0) {
             end = i + match[0].length; 
-            tokens.push({ type: TokenTypes[key], value: match[0], position: [i, end] });
+            tokens.push(new Token(TokenTypes[key], new Span(i, end), match[0]));
 
             return end;
         }
@@ -148,7 +154,7 @@ readString = function (tokens, str, i, delimiter) {
 
             case delimiter:
                 i++;
-                tokens.push({ type: TokenTypes.STRING, value: value, position: [start, i] });
+                tokens.push(new Token(TokenTypes.STRING, new Span(start, i), value));
                 return i;
 
             default:
