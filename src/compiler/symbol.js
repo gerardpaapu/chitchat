@@ -9,7 +9,7 @@ var shared_keywords,
     Symbol;
 
 Symbol = function  (value) {
-    assert.ok(Symbol.isLegalValue(value), 'value is a legal chitchat symbol');
+    //assert.ok(Symbol.isLegalValue(value), 'value is a legal chitchat symbol');
     this.value = value;
 };
 

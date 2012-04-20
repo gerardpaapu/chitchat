@@ -1,17 +1,3 @@
-;;; Ord
-;;; ---
-;;;
-;;; Types that implement 'Ord' have a perfect ordering
-(protocol Ord
-    (method (greater-than Ord Ord) Boolean)
-    (method (equal Ord Ord) Boolean))
-
-(Ord implement Number
-     (method (greater-than a b)
-        (a > b))
-
-     (method (equal a b)
-        (a == b)))
 
 ;;; OrderedSet
 ;;; ----------
@@ -29,7 +15,7 @@
         ;; call uniquify! unless the items are known to be distinct
         ;; call sort! unless the items are known to be sorted
         (if distinct.isFalse? (this uniquify!)
-            ordered.isFalse?  (this sort!))
+            ordered.isFalse?  (this sort!)))
 
     (method (contains? needle)
         (this.items contains? needle))
@@ -65,8 +51,8 @@
 
     (method (sort!)
         ;; Ensure that this.items is sorted by the Ord generics
-        (this.items sort ^(if (Ord greater-than #0, #1) MORE
-                              (Ord greater-than #1, #0) LESS
+        (this.items sort ^(if (#0 > #1) MORE
+                              (#1 < #0) LESS
                               EQUAL)))
 
     (method (uniqify!)
@@ -75,4 +61,4 @@
             (this.items reduce ^[out, item] (if (out contains? item)
                                                 out
                                                 (out concat item))
-                                #[]))) 
+                                #[]))))
