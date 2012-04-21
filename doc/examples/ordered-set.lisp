@@ -35,14 +35,12 @@
         this.items.length)
 
     (method (concat ls)
-        (let (dest this
-
-              ;; ls can be an OrderedSet or an Array
-              items  (if (ls isAn OrderedSet) ls.items
-                         (ls isAn Array) ls)
+        (let [;; ls can be an OrderedSet or an Array
+              (items  (if (ls isAn OrderedSet) ls.items
+                          (ls isAn Array) ls))
 
               ;; items that don't exist in the destination
-              new-items (ls filter ^(dest contains #0)))
+              (new-items (ls filter ^(this contains #0) this))]
 
             ;; return the same OrderedSet unless there are new items
             (if new-items.isEmpty?

@@ -31,77 +31,6 @@ compile = function (tree) {
     }
 };
 
-compileSymbol = function (symbol) {
-    // The following are keywords in ChitChat AND javascript
-    // so will be returned as-is
-    var shared = ["this", "null", "true", "false"];
-
-    if (shared.indexOf(symbol.value) != -1)
-        return symbol.value;
-
-    // These are the legal components of symbols in Chitchat
-    // - glyphs  '_-+=$&%@!?~`<>:|'
-    // - letters 'abcdefghijklmnopqrsutvwxyz'
-    // - digits  '1234567890'
-    //
-    // A symbol in chitchat is a glyph or letter followed by zero or more glyphs, letters, and numbers
-    // An Identifier can be any symbol that isn't a reserved word in Chitchat.
-    //
-    // These are the legal components of symbols in Javascript
-    // - glyphs '_$'
-    // - letters 'absdefghijklmnopqrstuvwxyz'
-    // - digits '1234567890'
-    //
-    // Because of this mismatch, the following characters must be escaped '-+=&%@!?~`<>:|'
-    var escapes, src, result, i, max, ch, reserved;
-    escapes = {
-        '_': '',
-        '-': 'minus',
-        '+': 'plus',
-        '=': 'equal',
-        '&': 'and',
-        '%': 'modulo',
-        '@': 'at',
-        '!': 'bang',
-        '?': 'question',
-        '~': 'tilde',
-        '`': 'grave',
-        '<': 'less',
-        '>': 'greater',
-        ':': 'colon',
-        '|': 'or'
-    };
-
-    src = symbol.value;
-    result = '';
-
-    for (i = 0, max = src.length; i < max; i++) {
-        ch = src.charAt(i);
-        if (ch in escapes) {
-            result += '_' + escapes[ch] + '_';
-        } else {
-            result += ch;
-        }
-    }
-
-    // These words may not be used as identifiers in
-    // Javascript as specified in Ecma-262 7.6
-    reserved = [
-        'break', 'case', 'catch', 'continue', 'debugger', 
-        'default', 'delete', 'do', 'else', 'finally', 'for', 
-        'function', 'if', 'in', 'instanceof', 'new', 'return', 
-        'switch', 'this', 'throw', 'try', 'typeof', 'var', 'void', 
-        'while', 'with', 'class', 'enum', 'extends', 'super', 
-        'const', 'export', 'import', 'null', 'true', 'false'
-    ];   
-
-    if (reserved.indexOf(result) != -1) {
-        return '_$' + result;
-    } else {
-        return result;
-    }
-};
-
 compileList = function (list) {
     if (list[0] instanceof Symbol &&
         list[0].value in keywords) {
@@ -111,6 +40,7 @@ compileList = function (list) {
     if (list.length < 2) throw new SyntaxError();
 
     var args_str = list.slice(2).map(compile).join(', ');
+    var msg = list[1];
 
     return format('CHITCHAT.passMessage($0, $1, [$2])',
                   compile(list[0]),
@@ -118,12 +48,15 @@ compileList = function (list) {
                   args_str);
 };
 
-compileMessage = function (message) {
-    if (message instanceof Symbol) return compile(message.value);
+function getMes(form) {
+    if (form instanceof Symbol) {
+        return form.value;
+    }
 
-    if (type(message) == 'Array' &&
-        message[0].value == "#MSG")
-        return compile(message[1]);
+    if (type(form) == 'Array' &&
+        form[0].value == "#MSG") {
+        return form[1];
+    }
 
     throw new SyntaxError();
 };

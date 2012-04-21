@@ -8,8 +8,11 @@ var shared_keywords,
     assert = require('assert'),
     Symbol;
 
-Symbol = function  (value) {
-    //assert.ok(Symbol.isLegalValue(value), 'value is a legal chitchat symbol');
+Symbol = function  (value, skip_test) {
+    if (!skip_test) {
+        assert.ok(Symbol.isLegalValue(value),
+                  'value is a legal chitchat symbol: ' + value);
+    }
     this.value = value;
 };
 
@@ -27,7 +30,7 @@ Symbol.isLegalValue = function (value) {
     var glyphs = '_-+=$&%@!?~`<>:|',
         letters = 'abcdefghijklmnopqrsutvwxyz',
         digits = '1234567890',
-        prefix = glyphs + letters,
+        prefix = glyphs + letters + letters.toUpperCase(),
         all = prefix + digits,
         ch, i;
 
@@ -58,7 +61,7 @@ shared_keywords = ["this", "null", "true", "false"];
 
 // these words may not be used as identifiers in
 // javascript as specified in ecma-262 7.6
-javascipt_reserved = [
+javascript_reserved = [
     'break', 'case', 'catch', 'continue', 'debugger', 
     'default', 'delete', 'do', 'else', 'finally', 'for', 
     'function', 'if', 'in', 'instanceof', 'new', 'return', 
@@ -133,7 +136,7 @@ unescapeSymbol = function (src) {
             // read to the next '_' for
             // the entire escape sequence
             next = src.indexOf('_', i + 1) + 1;
-            key = src.slice(i, end + 1);
+            key = src.slice(i, next);
             
             assert.ok(key in unescape_map,
                       key + ' must be valid escape sequence');
@@ -151,21 +154,21 @@ unescapeSymbol = function (src) {
 };
 
 escapeSymbol = function (src) {
-    if (shared_keywords.indexof(src) != -1)
+    if (shared_keywords.indexOf(src) != -1)
         return src;
 
     var result = '', i, max, ch;
 
     for (i = 0, max = src.length; i < max; i++) {
         ch = src.charAt(i);
-        if (ch in escapes) {
-            result += '_' + escapes[ch] + '_';
+        if (ch in escape_map) {
+            result += '_' + escape_map[ch] + '_';
         } else {
             result += ch;
         }
     }
 
-    if (reserved.indexOf(result) != -1) {
+    if (javascript_reserved.indexOf(result) != -1) {
         return '_$' + result;
     } else {
         return result;

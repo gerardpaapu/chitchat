@@ -10,6 +10,6 @@ process.stdin.on('data', function (d) {
 });
 
 process.stdin.on('end', function () {
-    console.log( readAll(src) );
+    console.log( JSON.stringify( readAll(src) ));
 });
 

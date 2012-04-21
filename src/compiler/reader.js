@@ -11,7 +11,6 @@
 //       := literal
 //
 // message := symbol
-//         := '~' expr ; should I get rid of this?
 //         := '(' 'message' expr ')' 
 //
 // rest := '.' symbol rest
@@ -35,8 +34,8 @@
 // binding  := symbol | '(' symbol expr ')'
 var read,
     parseExpr, parseExpr_,
-    parseList, parseBindings, parseBlock,
-    parseRest, parseDotAcessor, parseBracketAccessor,
+    parseBracketPair, parseList, parseBindings, parseBlock,
+    parseRest, parseAcessor, parseDotAcessor, parseBracketAccessor,
     parseLiteral, parseArray, parseDict,
     parseColonAccessor, parseDoubleColonAccessor, parseFunctionLiteral,
 
@@ -53,12 +52,12 @@ var read,
 //   #[1 2 3] -> (#ARRAY 1 2 3)
 //   foo.bar  -> (#MSG foo "bar")
 //
+Symbol.ARGS = new Symbol('#ARGS', true);
 Symbol.ARRAY = new Symbol('#ARRAY', true);
 Symbol.BINDINGS = new Symbol('#BINDINGS', true);
 Symbol.BLOCK = new Symbol('#BLOCK', true);
 Symbol.DICT = new Symbol('#DICT', true);
 Symbol.GET = new Symbol('#GET', true);
-Symbol.LAMBDA = new Symbol('#LAMBDA', true);
 Symbol.MSG = new Symbol('#MSG', true);
 Symbol.PROTOTYPE = new Symbol('#PROTOTYPE', true);
 
@@ -87,13 +86,16 @@ parseExpr_ = function (tokens) {
             return tokens.shift().value;
 
         case TokenTypes.POSITIONAL_ARG:
-            return tokens.shift().value;
+            return [Symbol.ARGS, tokens.shift().value];
 
         case TokenTypes.CARET:
             return parseFunctionLiteral(tokens);
 
         case TokenTypes.OCTOTHORPE:
             return parseLiteral(tokens);
+
+        default:
+            throw new SyntaxError();
     }
 };
 
@@ -116,14 +118,16 @@ parseRest = function (tokens, root) {
 };
 
 parseAcessor = function (tokens, root, _return) {
+    var symbol, expr;
+
     switch (tokens[0].type) {
         case TokenTypes.SYMBOL:
-            var symbol = new Symbol(tokens.shift().value); 
+            symbol = new Symbol(tokens.shift().value); 
             return parseRest(tokens, _return(root, symbol.value));
 
         case TokenTypes.OPEN_BRACKET:
             tokens.shift();
-            var expr = parseExpr(tokens);
+            expr = parseExpr(tokens);
             assert.equal(tokens.shift().type, TokenTypes.CLOSE_BRACKET);
 
             return parseRest(tokens, _return(root, expr));
@@ -136,8 +140,9 @@ parseAcessor = function (tokens, root, _return) {
 parseDotAcessor = function (tokens, root) {
     // Parsing root.symbol or root.[exp]
     assert.equal(tokens.shift().type, TokenTypes.DOT);
+
     return parseAcessor(tokens, root, function (root, prop) {
-        return [root, prop];
+        return [root, [Symbol.MSG, prop]];
     });
 };
 
@@ -191,7 +196,7 @@ parseLiteral = function (tokens) {
 
 parseArray = function (tokens) {
     assert.equal(tokens.shift().type, TokenTypes.OCTOTHORPE);
-    return parseBracketPair(tokens, TokenTypes.OPEN_BRACKET, TokenTypes.CLOSE_BRACKET);
+    return [Symbol.ARRAY, parseBracketPair(tokens, TokenTypes.OPEN_BRACKET, TokenTypes.CLOSE_BRACKET)];
 };
 
 parseDict = function (tokens) {
@@ -226,7 +231,7 @@ parseBracketPair = function (tokens, start, stop) {
 
     return result;
 };
-//
+
 // parsing "(blah blah blah)"
 parseList = function (tokens) {
     return parseBracketPair(tokens, TokenTypes.OPEN_PAREN, TokenTypes.CLOSE_PAREN);

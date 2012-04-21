@@ -98,7 +98,9 @@ readToken = function (tokens, str, i) {
 
             if (match && match.index === 0) {
                 end = i + match[0].length;
-                tokens.push(new Token(TokenTypes.POSITIONAL_ARG, new Span(i, end), match[0]));
+                tokens.push(new Token(TokenTypes.POSITIONAL_ARG,
+                                      new Span(i, end),
+                                      parseInt(match[0].slice(1), 10)));
                 return end;
             }
     }
