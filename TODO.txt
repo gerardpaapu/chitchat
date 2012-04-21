@@ -1,0 +1,30 @@
+The Parse doesn't retain location information
+--
+
+- Wrap each parse value in a Syntax object (src/compiler/syntax.js)
+- Get the compiler to emit a source-map file https://wiki.mozilla.org/DevTools/Features/SourceMap
+
+The whole compiler is mess
+--
+
+- Get rid of the 'function compile (stx) { return compiler.compile(stx); }' everywhere
+- Make sure that I'm using Symbol::toJSSymbol() everywhere I should be 
+- src/compiler/primitives/accessor.js is incomplete
+- Needs to be more... typesafe, whatever that means in this context
+
+Emitting strings from the ChitChat AST has got to stop
+--
+
+- Intermediary language? (with direct mapping to JS)
+- Emit Uglify objects?
+
+Should start running the code
+--
+
+- Write a script to browserify a bunch of compiled chitchat source
+- Write a method to eval chitchat directly 
+
+Tests
+--
+
+- Need some
