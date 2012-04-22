@@ -26,7 +26,7 @@ module.exports = {
             constructor = 'function () {}';
         } else {
             constructor = format('function ($0) {\n$1;\n}',
-                                compiler.compileArgs(constructors[0][1].slice(1), compiler),
+                                compiler.compileArgs(constructors[0][1], compiler),
                                 constructors[0].slice(2).map(compile).join(';\n')) ; 
         }
 

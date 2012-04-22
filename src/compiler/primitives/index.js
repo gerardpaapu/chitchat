@@ -11,3 +11,4 @@ extend(exports, require('./class.js'));
 extend(exports, require('./conditionals.js'));
 extend(exports, require('./let.js'));
 extend(exports, require('./accessors.js'));
+extend(exports, require('./logical-operators.js'));
