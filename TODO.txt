@@ -1,3 +1,16 @@
+Make Chitchat as self-hosting as possible
+---
+
+- Is this desirable? It won't really make it more portable, because it necessarily runs on a JS runtime
+- It is cool, and it might make the compiler less LOC
+- The Tokenizer/Parser/Compiler/ can be translated (need test coverage first)
+- Much of the runtime can be chitchat
+
+There's Basically no documentation
+-----
+
+- write some
+
 The Parse doesn't retain location information
 --
 
