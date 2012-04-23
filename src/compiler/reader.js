@@ -1,6 +1,6 @@
 // CHITCHAT GRAMMAR
 // ================
-// module := expr+
+// module := ( expr | definition ) +
 //
 // expr := expr' rest
 //
@@ -32,17 +32,12 @@
 // letexpr  := '(' 'let' '[' binding* ']' expr* ')'
 //
 // binding  := symbol | '(' symbol expr ')'
-var read,
-    parseExpr, parseExpr_,
-    parseBracketPair, parseList, parseBindings, parseBlock,
-    parseRest, parseAcessor, parseDotAcessor, parseBracketAccessor,
-    parseLiteral, parseArray, parseDict,
-    parseColonAccessor, parseDoubleColonAccessor, parseFunctionLiteral,
-
+var Parser,
     assert = require('assert'),
     TokenTypes = require('./tokenizer.js').TokenTypes,
     tokenize = require('./tokenizer.js').tokenize,
     Symbol = require('./symbol.js').Symbol,
+    Span = require('./syntax.js').Span,
     Syntax = require('./syntax.js').Syntax;
 
 
@@ -61,215 +56,289 @@ Symbol.GET = new Symbol('#GET', true);
 Symbol.MSG = new Symbol('#MSG', true);
 Symbol.PROTOTYPE = new Symbol('#PROTOTYPE', true);
 
-parseExpr = function (tokens) {
-    return parseRest(tokens, parseExpr_(tokens));
+var Parser = function (tokens) {
+    this.tokens = tokens; 
+    this.index = 0;    // current token
+    this.token = this.tokens[this.index];
+    this.location = this.token.location; // source position
 };
 
-parseExpr_ = function (tokens) {
-    switch (tokens[0].type) {
+exports.Parser = Parser;
+
+Parser.prototype.isEmpty = function () {
+    return this.index >= this.tokens.length;
+};
+
+Parser.prototype.next = function () {
+    assert.ok(!this.isEmpty());
+    this.index ++;
+    this.token = this.tokens[this.index];
+    if (this.token) {
+        assert.ok(this.token.location);
+        this.location = this.token.location;
+    }
+};
+
+Parser.prototype.shift = function () {
+    var token = this.token;
+    this.next();
+    return token;
+};
+
+Parser.prototype.Syntax = function (value) {
+    return new Syntax(this.location, value);
+};
+
+Parser.prototype.parseModule = function () {
+    var start = this.location,
+        value = [],
+        end, loc;
+
+    try { 
+        while (this.token) {
+            console.log('starting from ', this.token);
+            value.push(this.parseExpr());
+        }
+    } catch (err) {
+        console.log('Error Reading @ ', this.token, this.location);
+        throw err;
+    }
+
+    end = this.location;
+    loc = Span.over(start, end);
+
+    return new Syntax(loc, value);
+};
+
+Parser.prototype.parseExpr = function () {
+    return this.parseRest(this.parseExpr_());
+};
+
+Parser.prototype.parseExpr_ = function () {
+    var token;
+    switch (this.token.type) {
         case TokenTypes.OPEN_PAREN:
-            return parseList(tokens);
+            return this.parseList();
 
         case TokenTypes.OPEN_BRACKET:
-            return parseBindings(tokens);
+            return this.parseBindings();
 
         case TokenTypes.OPEN_BRACE:
-            return parseBlock(tokens);
+            return this.parseBlock();
 
         case TokenTypes.SYMBOL:
-            return new Symbol(tokens.shift().value);
+            token = this.shift();
+            return new Syntax(token.location, new Symbol(token.value));
 
         case TokenTypes.NUMBER:
-            return Number(tokens.shift().value);
+            token = this.shift();
+            return new Syntax(token.location, Number(token.value));
 
         case TokenTypes.STRING:
-            return tokens.shift().value;
+            token = this.shift();
+            return new Syntax(token.location, token.value);
 
         case TokenTypes.POSITIONAL_ARG:
-            return [Symbol.ARGS, tokens.shift().value];
+            token = this.shift();
+            return new Syntax(token.location, [Symbol.ARGS, token.value]);
 
         case TokenTypes.CARET:
-            return parseFunctionLiteral(tokens);
+            return this.parseFunctionLiteral();
 
         case TokenTypes.OCTOTHORPE:
-            return parseLiteral(tokens);
+            return this.parseLiteral();
 
         default:
             throw new SyntaxError();
     }
 };
 
-parseRest = function (tokens, root) {
-    if (tokens.length === 0) return root;
+Parser.prototype.parseRest = function (root) {
+    if (this.isEmpty()) return root;
 
-    switch (tokens[0].type) {
+    switch (this.token.type) {
         case TokenTypes.DOT:
-            return parseDotAcessor(tokens, root);
+            return this.parseDotAcessor(root);
 
         case TokenTypes.DOUBLE_COLON:
-            return parseDoubleColonAccessor(tokens, root);
+            return this.parseDoubleColonAccessor(root);
 
         case TokenTypes.COLON:
-            return parseColonAccessor(tokens, root);
+            return this.parseColonAccessor(root);
 
         default:
             return root;
     }
 };
 
-parseAcessor = function (tokens, root, _return) {
-    var symbol, expr;
 
-    switch (tokens[0].type) {
+Parser.prototype.parseAcessor = function (_return) {
+    // _return: function (Syntax root, Syntax expr) -> Syntax
+    var token, expr;
+
+    switch (this.token.type) {
         case TokenTypes.SYMBOL:
-            symbol = new Symbol(tokens.shift().value); 
-            return parseRest(tokens, _return(root, symbol.value));
+            token = this.shift();
+            return new Syntax(token.location, token.value);
 
         case TokenTypes.OPEN_BRACKET:
-            tokens.shift();
-            expr = parseExpr(tokens);
-            assert.equal(tokens.shift().type, TokenTypes.CLOSE_BRACKET);
-
-            return parseRest(tokens, _return(root, expr));
+            this.shift();
+            expr = this.parseExpr();
+            assert.equal(this.shift().type, TokenTypes.CLOSE_BRACKET);
+            return expr;
 
         default:
             throw new SyntaxError('expected "[" or a symbol');
     }
 };
 
-parseDotAcessor = function (tokens, root) {
+Parser.prototype.parseDotAcessor = function (root) {
     // Parsing root.symbol or root.[exp]
-    assert.equal(tokens.shift().type, TokenTypes.DOT);
+    assert.equal(this.shift().type, TokenTypes.DOT);
+    var prop = this.parseAcessor(),
+        loc = new Span(root.location.start, prop.location.end),
+        msg = new Syntax(prop.location, Symbol.MSG),
+        stx;
 
-    return parseAcessor(tokens, root, function (root, prop) {
-        return [root, [Symbol.MSG, prop]];
-    });
+    stx =  new Syntax(loc, [root, new Syntax(prop.location, [msg, prop])]);
+
+    return this.parseRest(stx);
 };
 
-parseColonAccessor = function (tokens, root) {
+Parser.prototype.parseColonAccessor = function (root) {
     // Parsing root:symbol or root:[exp]
-    assert.equal(tokens.shift().type, TokenTypes.COLON);
+    assert.equal(this.shift().type, TokenTypes.COLON);
 
-    return parseAcessor(tokens, root, function (root, prop) {
-        return [Symbol.GET, root, prop];
-    });
+    var prop = this.parseAcessor(),
+        loc = new Span(root.location.start, prop.location.end),
+        get = new Syntax(loc, Symbol.GET);
+
+    this.parseRest(new Syntax(loc, [get, root, prop]));
 };
 
-parseDoubleColonAccessor = function (tokens, root) {
+Parser.prototype.parseDoubleColonAccessor = function (root) {
     // Parsing root::symbol or root::[exp]
-    assert.equal(tokens.shift().type, TokenTypes.COLON);
+    assert.equal(this.shift().type, TokenTypes.COLON);
 
-    return parseAcessor(tokens, root, function (root, prop) {
-        return [Symbol.PROTOTYPE, root, prop];
-    });
+    var prop = this.parseAcessor(),
+        loc = new Span(root.location.start, prop.location.end),
+        proto = new Syntax(loc, Symbol.PROTOTYPE);
+
+    return this.parseRest(new Syntax(loc, [proto, root, prop]));
 };
 
-parseFunctionLiteral = function (tokens, root) {
-    assert.equal(tokens.shift().type, TokenTypes.CARET);
-    var bindings;
+Parser.prototype.parseFunctionLiteral = function () {
+    assert.equal(this.shift().type, TokenTypes.CARET);
 
-    if (tokens[0].type === TokenTypes.OPEN_BRACKET) {
+    var bindings,
+        // TODO: should I represent this as something other than a symbol?
+        _function = this.Syntax(new Symbol('function'));
+
+    if (this.token.type === TokenTypes.OPEN_BRACKET) {
         // Parsing "^" bindings expr
-        bindings = parseBindings(tokens);     
+        bindings = this.parseBindings();     
     } else {
         // Parsing "^" expr
-        bindings = [Symbol.BINDINGS];
+        bindings = this.Syntax([this.Syntax(Symbol.BINDINGS)]);
     }
 
-    return [new Symbol('function'), bindings, parseExpr(tokens)];
+    return this.Syntax([_function, bindings, this.parseExpr()]);
 };
 
-parseLiteral = function (tokens) {
-    assert.equal(tokens[0].type, TokenTypes.OCTOTHORPE);
+Parser.prototype.parseLiteral = function () {
+    assert.equal(this.token.type, TokenTypes.OCTOTHORPE);
 
-    switch (tokens[1].type) {
+    switch (this.tokens[this.index + 1].type) {
         case TokenTypes.OPEN_BRACKET:
-            return parseArray(tokens);
+            return this.parseArray();
 
         case TokenTypes.OPEN_BRACE:
-            return parseDict(tokens);
+            return this.parseDict();
 
         default:
             throw new SyntaxError('"#" must start an array or dictionary literal'); 
     }    
 };
 
-parseArray = function (tokens) {
-    assert.equal(tokens.shift().type, TokenTypes.OCTOTHORPE);
-    return [Symbol.ARRAY, parseBracketPair(tokens, TokenTypes.OPEN_BRACKET, TokenTypes.CLOSE_BRACKET)];
+Parser.prototype.parseArray = function () {
+    var _array = this.Syntax(Symbol.ARRAY),
+        start, end, value, loc;
+
+    assert.equal(this.shift().type, TokenTypes.OCTOTHORPE);
+
+    start = this.location;
+    value = this.parseBracketPair(TokenTypes.OPEN_BRACKET, TokenTypes.CLOSE_BRACKET);
+    end = this.location;
+    loc = Span.over(start, end);
+
+    return new Syntax(loc, [_array, new Syntax(loc, value)]);
 };
 
-parseDict = function (tokens) {
-    assert.equal(tokens.shift().type, TokenTypes.OCTOTHORPE);
-    assert.equal(tokens.shift().type, TokenTypes.OPEN_BRACE);
-    var result = [Symbol.DICT]; 
-        
-    while (tokens[0].type != TokenTypes.CLOSE_BRACE) {
-        assert.ok(tokens.length > 0, 'unexpected end of input');
-        assert.equal(tokens[0].type, TokenTypes.SYMBOL);
-        result.push( new Symbol(tokens.shift().value) );
+Parser.prototype.parseDict = function () {
+    assert.equal(this.shift().type, TokenTypes.OCTOTHORPE);
+    assert.equal(this.shift().type, TokenTypes.OPEN_BRACE);
 
-        assert.ok(tokens.length > 0, 'unexpected end of input');
-        result.push( parseExpr(tokens) ); 
+    var _dict = this.Syntax(Symbol.DICT),
+        start = this.location,
+        result = [_dict]; 
+        
+    while (this.token.type != TokenTypes.CLOSE_BRACE) {
+        assert.ok(!this.isEmpty(), 'unexpected end of input');
+        assert.equal(this.token.type, TokenTypes.SYMBOL);
+        result.push(this.Syntax(new Symbol(this.shift().value)));
+
+        assert.ok(!this.isEmpty(), 'unexpected end of input');
+        result.push(this.parseExpr()); 
     }
 
-    tokens.shift();
+    this.shift();
+
     return result;
 };
 
-parseBracketPair = function (tokens, start, stop) {
+Parser.prototype.parseBracketPair = function (start, stop) {
     var result = [];
-    assert.equal(tokens.shift().type, start);
-    assert.ok(tokens.length > 0, 'unexpected end of input');
+    assert.equal(this.shift().type, start);
+    assert.ok(!this.isEmpty(), 'unexpected end of input');
 
-    while (tokens[0].type != stop) {
-        assert.ok(tokens.length > 0, 'unexpected end of input');
-        result.push( parseExpr(tokens) );
-        assert.ok(tokens.length > 0, 'unexpected end of input');
+    while (this.token.type != stop) {
+        assert.ok(!this.isEmpty(), 'unexpected end of input');
+        result.push(this.parseExpr());
+        assert.ok(!this.isEmpty(), 'unexpected end of input');
     }
-    tokens.shift();
-
+    this.shift();
     return result;
 };
 
 // parsing "(blah blah blah)"
-parseList = function (tokens) {
-    return parseBracketPair(tokens, TokenTypes.OPEN_PAREN, TokenTypes.CLOSE_PAREN);
+Parser.prototype.parseList = function () {
+    var start, value, end;
+    start = this.location;
+    console.log('start', start, this.token);
+    value = this.parseBracketPair(TokenTypes.OPEN_PAREN, TokenTypes.CLOSE_PAREN);
+    end = this.location;
+
+    return new Syntax(Span.over(start, end), value);
 };
 
 // parsing "[blah blah blah]", should only appear in
 // function literals and let expressions 
-parseBindings = function (tokens) {
-    var contents = parseBracketPair(tokens, TokenTypes.OPEN_BRACKET, TokenTypes.CLOSE_BRACKET);
-    return [Symbol.BINDINGS].concat(contents);
+Parser.prototype.parseBindings = function () {
+    var bindings = this.Syntax(Symbol.BINDING),
+        start = this.location,
+        value = this.parseBracketPair(TokenTypes.OPEN_BRACKET, TokenTypes.CLOSE_BRACKET),
+        end = this.location,
+        loc = Span.over(start, end);
+
+    return new Syntax(loc, [bindings].concat(value));
 };
 
-parseBlock = function (tokens) {
-    var contents = parseBracketPair(tokens, TokenTypes.OPEN_BRACE, TokenTypes.CLOSE_BRACE);
-    return [Symbol.BLOCK].concat(contents);
-};
+Parser.prototype.parseBlock = function () {
+    var start = this.location,
+        contents = this.parseBracketPair(TokenTypes.OPEN_BRACE, TokenTypes.CLOSE_BRACE),
+        end = this.location,
+        loc = Span.over(start, end),
+        block = new Syntax(start, Symbol.BLOCK);
 
-read = function (str) {
-    var tokens = tokenize(str);
-    try {
-        return parseExpr(tokens);
-    } catch (err) {
-        throw new SyntaxError(err + ' @ ' + tokens[0].position);
-    }
-};
-
-exports.read = read;
-
-exports.readAll = function (str) {
-    var exprs = [],
-        tokens = tokenize(str);
-    try {
-        while (tokens.length > 0) {
-            exprs.push(parseExpr(tokens));
-        }
-    } catch (err) {
-        throw new SyntaxError(err + ' @ ' + tokens[0].location);
-    }
-
-    return exprs;
+    return new Syntax(loc, [Symbol.BLOCK].concat(contents));
 };

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-var readAll = require('../src/compiler/reader.js').readAll,
+var Parser = require('../src/compiler/reader.js').Parser,
+    tokenize = require('../src/compiler/tokenizer.js').tokenize,
     src;
 
 src = '';
@@ -10,6 +11,7 @@ process.stdin.on('data', function (d) {
 });
 
 process.stdin.on('end', function () {
-    console.log( JSON.stringify( readAll(src) ));
+    var tokens = tokenize(src);
+    console.log( JSON.stringify( new Parser(tokens).parseModule() ));
 });
 

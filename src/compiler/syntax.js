@@ -5,14 +5,21 @@ exports.Token = function (type, location, value) {
 };
 
 exports.Syntax = function (span, value) {
-    this.span = span;
+    this.location = span;
     this.value = value;
 };
 
-exports.Span = function (start, end) {
+var Span = function (start, end) {
     this.start = start;
     this.end = end;
 };
-exports.Span.prototype.toString = function () {
+
+exports.Span = Span;
+
+Span.over = function (a, b) {
+    return new Span(a.start, b.end);
+};
+
+Span.prototype.toString = function () {
     return '(' + this.start + ', ' + this.end + ')';
 };
