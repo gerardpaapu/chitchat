@@ -86,6 +86,7 @@ Parser.prototype.shift = function () {
 };
 
 Parser.prototype.Syntax = function (value) {
+    if (!this.location) throw new Error('No Location', this.tokens.slice(0, 2));
     return new Syntax(this.location, value);
 };
 
@@ -96,11 +97,10 @@ Parser.prototype.parseModule = function () {
 
     try { 
         while (this.token) {
-            console.log('starting from ', this.token);
             value.push(this.parseExpr());
         }
     } catch (err) {
-        console.log('Error Reading @ ', this.token, this.location);
+        console.log('Error Reading @ ', this.location);
         throw err;
     }
 
@@ -195,6 +195,10 @@ Parser.prototype.parseAcessor = function (_return) {
 Parser.prototype.parseDotAcessor = function (root) {
     // Parsing root.symbol or root.[exp]
     assert.equal(this.shift().type, TokenTypes.DOT);
+
+    if (!root.location) {
+        console.log(root.toString());
+    }
     var prop = this.parseAcessor(),
         loc = new Span(root.location.start, prop.location.end),
         msg = new Syntax(prop.location, Symbol.MSG),
@@ -314,7 +318,6 @@ Parser.prototype.parseBracketPair = function (start, stop) {
 Parser.prototype.parseList = function () {
     var start, value, end;
     start = this.location;
-    console.log('start', start, this.token);
     value = this.parseBracketPair(TokenTypes.OPEN_PAREN, TokenTypes.CLOSE_PAREN);
     end = this.location;
 
@@ -324,7 +327,7 @@ Parser.prototype.parseList = function () {
 // parsing "[blah blah blah]", should only appear in
 // function literals and let expressions 
 Parser.prototype.parseBindings = function () {
-    var bindings = this.Syntax(Symbol.BINDING),
+    var bindings = this.Syntax(Symbol.BINDINGS),
         start = this.location,
         value = this.parseBracketPair(TokenTypes.OPEN_BRACKET, TokenTypes.CLOSE_BRACKET),
         end = this.location,

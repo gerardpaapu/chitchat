@@ -9,7 +9,8 @@ var tokenize,
     SIMPLE_TOKENS,
     PATTERNS,
     Token = require('./syntax.js').Token,
-    Span = require('./syntax.js').Span;
+    Span = require('./syntax.js').Span,
+    SourceLocation = require('./syntax.js').SourceLocation;
 
 assert = function (exp, msg) {
     if (!exp) throw new Error(msg || "assertion failed");
@@ -99,7 +100,7 @@ readToken = function (tokens, str, i) {
             if (match && match.index === 0) {
                 end = i + match[0].length;
                 tokens.push(new Token(TokenTypes.POSITIONAL_ARG,
-                                      new Span(i, end),
+                                      Span.at(str, i, end),
                                       parseInt(match[0].slice(1), 10)));
                 return end;
             }
@@ -112,7 +113,7 @@ readToken = function (tokens, str, i) {
         slice = str.slice(i, end); 
 
         if (slice === SIMPLE_TOKENS[key]) {
-            tokens.push(new Token(TokenTypes[key], new Span(i, end)));
+            tokens.push(new Token(TokenTypes[key], Span.at(str, i, end)));
             return end;
         }
     }
@@ -126,7 +127,7 @@ readToken = function (tokens, str, i) {
 
         if (match && match.index === 0 && match.length > 0) {
             end = i + match[0].length; 
-            tokens.push(new Token(TokenTypes[key], new Span(i, end), match[0]));
+            tokens.push(new Token(TokenTypes[key], Span.at(str, i, end), match[0]));
 
             return end;
         }
@@ -156,7 +157,7 @@ readString = function (tokens, str, i, delimiter) {
 
             case delimiter:
                 i++;
-                tokens.push(new Token(TokenTypes.STRING, new Span(start, i), value));
+                tokens.push(new Token(TokenTypes.STRING, Span.at(str, start, i), value));
                 return i;
 
             default:
