@@ -107,6 +107,26 @@ JSEmitter.prototype.compileAsReturnStatement = function () {
     return 'return ' + this.compileAsExpression() + ';\n';
 };
 
+var JSNumberEmitter = function (value) {
+    this.value = value;
+};
+
+JSNumberEmitter.prototype = new JSEmitter();
+
+JSNumberEmitter.prototype.compileAsExpression = function () {
+    return JSON.stringify(this.value);   
+};
+
+var JSStringEmitter = function (value) {
+    this.value = value;
+};
+
+JSStringEmitter.prototype = new JSEmitter();
+
+JSStringEmitter.prototype.compileAsExpression = function () {
+    return JSON.stringify(this.value);   
+};
+
 var JSAssignmentEmitter = function (symbol, value) {
     this.symbol = symbol;
     this.value = value;
