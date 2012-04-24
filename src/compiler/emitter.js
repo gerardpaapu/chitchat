@@ -247,24 +247,30 @@ var JSIfEmitter = function (test, trueBranch, falseBranch) {
     this.falseBranch = falseBranch;
 };
 
-exports.JSIfEmitter = JSIIFEEmitter;
+exports.JSIfEmitter = JSIfEmitter;
 
 JSIfEmitter.prototype = new JSEmitter();
 
 JSIfEmitter.prototype.compileAsExpression = function () {
-    // TODO: add support for one-armed if
+    var falseBranch = this.falseBranch || JSKeywordEmitter.NULL; 
+
     return format('($0?$1:$2)', 
                   this.test.compileAsExpression(),
                   this.trueBranch.compileAsExpression(),
-                  this.falseBranch.compileAsExpression());
+                  falseBranch.compileAsExpression());
 };
 
 JSIfEmitter.prototype.compileAsStatement = function () {
-    // TODO: add support for one-armed if
-    return format('if ($0) {\n$1\n} else {\n$1\n}',
-                  this.test.compileAsExpression(),
-                  this.trueBranch.compileAsStatement(),
-                  this.falseBranch.compileAsStatement());
+    if (this.falseBranch == null) {
+        return format('if ($0) {\n$1\n}',
+                      this.test.compileAsExpression(),
+                      this.trueBranch.compileAsStatement());
+    } else {
+        return format('if ($0) {\n$1\n} else {\n$1\n}',
+                      this.test.compileAsExpression(),
+                      this.trueBranch.compileAsStatement(),
+                      this.falseBranch.compileAsStatement());
+    }
 };
 
 var JSKeywordEmitter = function (keyword) {
@@ -347,7 +353,7 @@ JSInfixEmitter.prototype = new JSEmitter();
 
 JSInfixEmitter.prototype.compileAsExpression = function () {
     assert.equal(classString(this.operator), 'String');
-    return this.operands.map(JSEmitter.compileAsExpression).join(this.operator);
+    return '(' + this.operands.map(JSEmitter.compileAsExpression).join(this.operator) + ')';
 };
 
 JSInfixEmitter.newInfix = function (operator) {
