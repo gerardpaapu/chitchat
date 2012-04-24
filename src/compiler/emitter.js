@@ -175,6 +175,21 @@ JSSymbolEmitter.reserved = [
     'const', 'export', 'import', 'null', 'true', 'false'
 ];   
 
+var JSAccessorEmitter = function (root, key) {
+    assert.ok(classString(key) == 'String' || 
+              classString(key) == 'Number');
+    this.root = root;
+    this.key = key
+};
+
+JSAccessorEmitter.prototype = new JSEmitter();
+
+JSAccessorEmitter.prototype.compileAsExpression = function () {
+    return format('$0[$1]',
+                  JSEmitter.compileAsExpression(this.root),
+                  JSON.stringify(this.key));
+};
+
 var JSFunctionEmitter = function (args, body, result) {
     this.args = args;
     this.body = body;
@@ -224,7 +239,6 @@ JSMethodCallEmitter.prototype.compileAsExpression = function () {
                   this.obj.compileAsExpression(),
                   JSON.stringify(this.methodName),
                   this.args.map(JSEmitter.compileAsExpression).join(', '));
-
 };
 
 var JSIfEmitter = function (test, trueBranch, falseBranch) {
