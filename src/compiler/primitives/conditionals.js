@@ -1,33 +1,31 @@
-var format = require('../format.js').format;
+/*globals require: false, module: false, exports: false, console: false */
+var JSIfEmitter = require('../emitter.js').JSIfEmitter;
 
 module.exports = {
-    'if': function (stx, compiler) {
-        function compile(stx) {
-            return compiler.compile(stx);
-        }
+    'if': function (arr) {
+        var compileIf = function (arr) {
+            switch (arr.length) {
+                case 0:
+                case 1:
+                    throw new SyntaxError();
 
-        var test, true_branch, false_branch,
-            i, max, tail, result = '', args = stx;
+                case 2:
+                    return new JSIfEmitter(this.compile(arr[0]),
+                                           this.compile(arr[1]),
+                                           null);
 
-        if (args.length < 2) throw new SyntaxError();
+                case 3:
+                    return new JSIfEmitter(this.compile(arr[0]),
+                                           this.compile(arr[1]),
+                                           this.compile(arr[2]));
 
-        if (args.length % 2 > 0) {
-            max = args.length - 2;
-            tail = compile(args[args.length - 1]);
-        } else {
-            max = args.length - 1;    
-            tail = 'null';
-        }
+                default:
+                    return new JSIfEmitter(this.compile(arr[0]),
+                                           this.compile(arr[1]),
+                                           compileIf(arr.slice(2)));
+            }
+        }.bind(this);
 
-        for (i = 0; i < max; i += 2) {
-            result += format('$0?$1:',
-                             compile(args[i]),
-                             compile(args[i + 1]));
-        }
-
-        result += tail;
-
-        return result;
+        return compileIf(arr);
     }
 };
-

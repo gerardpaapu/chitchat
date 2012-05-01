@@ -9,8 +9,14 @@ exports.Token = function (type, location, value) {
 };
 
 var Syntax = function (span, value) {
-    if (!span) throw new Error('No location given');
-    if (value == null) throw new Error('No value given');
+    if (!span) {
+        throw new Error('No location given');
+    }
+
+    if (value == null) {
+        throw new Error('No value given');
+    }
+
     var isSymbol = value instanceof Symbol;
 
     this.location = span;
@@ -32,6 +38,10 @@ var SourceLocation = function (character, row, column) {
     this.character = character;
     this.row = row;
     this.column = column;
+};
+
+SourceLocation.prototype.toString = function () {
+    return 'L' + this.row + ' C' + this.column;
 };
 
 SourceLocation.from = function (string, char) {
@@ -73,6 +83,6 @@ Span.at = function (str, start, end) {
 };
 
 Span.prototype.toString = function () {
-    return '(' + this.start + ', ' + this.end + ')';
+    return '(' + this.start + ' -- ' + this.end + ')';
 };
 

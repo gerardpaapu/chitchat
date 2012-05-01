@@ -1,36 +1,40 @@
-var format = require('../format.js').format,
-    classString = require('../../runtime/classString.js').classString,
-    Symbol = require('../symbol.js').Symbol,
+var Symbol = require('../symbol.js').Symbol,
+    JSIIFEEmitter = require('../emitter.js').JSIIFEEmitter,    
+    JSSymbolEmitter = require('../emitter.js').JSSymbolEmitter,    
+    JSVariableDeclaration = require('../emitter.js').JSVariableDeclaration,    
+    JSAssignmentEmitter = require('../emitter.js').JSAssignmentEmitter,    
     assert = require('assert');
 
 module.exports = {
-    'let': function (stx, compiler) {
-        var args = 'typeof arguments != "undefined" ? arguments : []',
-            bindings, bindings_js = '', body;
+    'let': function (arr) {
+        var bindings, statements, result, vars = [], body = [];
 
-        assert.equal(classString(stx[0]), 'Array');
-        assert.equal(stx[0][0], Symbol.BINDINGS);
+        assert.equal(arr[0].type, 'Array');
+        assert.equal(arr[0].value[0].type, 'Symbol');
+        assert.equal(arr[0].value[0].value, '#BINDINGS');
 
-        bindings = stx[0].slice(1);
-        if (bindings.length > 0) {
-            bindings_js += 'var ';
-            bindings_js += bindings.map(function (b) {
-                var val;
-                if (b instanceof Symbol) {
-                    return b.toJSSymbol();
-                } else {
-                    assert.equal(classString(b), 'Array');
-                    assert.ok(b[0] instanceof Symbol);
+        bindings = arr[0].value.slice(1);
 
-                    val = compiler.compile(b[1]);
-                    return format('$0 = $1', b[0].toJSSymbol(), val);
-                }
-            }).join(',\n    ');
-            bindings_js += ';';
-        }
-        return format('(function () {$0$1}.call(this, $2))',
-                     bindings_js,
-                     compiler.compileBlock(stx.slice(1), compiler),
-                     args);
+        bindings.forEach(function (binding) {
+            var symbol;
+            if (binding.type === 'Symbol') {
+                symbol = new JSSymbolEmitter(binding.escapedValue);
+            } else if (binding.type === 'Array') {
+                assert.equal(binding.value[0].type, 'Symbol');
+                symbol = new JSSymbolEmitter(binding.value[0].escapedValue);
+                body.push(new JSAssignmentEmitter(symbol, this.compile(binding.value[1])));
+            }
+
+            vars.push(symbol);
+        }, this);
+
+        arr.slice(1, -1).forEach(function (stx) {
+            body.push( this.compile(stx) );
+        }, this);
+
+        result = this.compile(arr[arr.length - 1]);
+        statements = [ new JSVariableDeclaration(vars) ].concat(body);
+
+        return new JSIIFEEmitter(statements, result);
     }
 };

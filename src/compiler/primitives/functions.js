@@ -1,31 +1,40 @@
 var format = require('../format.js').format,
     classString = require('../../runtime/classString.js').classString,
     Symbol = require('../symbol.js').Symbol,
+    JSFunctionEmitter = require('../emitter.js').JSFunctionEmitter,
+    JSSymbolEmitter = require('../emitter.js').JSSymbolEmitter,
+    JSIIFEEmitter = require('../emitter.js').JSIIFEEmitter,
     assert = require('assert');
 
 
 module.exports = {
-    'function': function (stx, compiler) {
-        var args, body;
+    'function': function (arr) {
+        var bindings, args, bodyStx, resultStx, body, result;
 
-        args = stx[0].slice(1);   
-        body = stx.slice(1);
+        assert.ok(arr.length >= 1);
 
-        assert.equal(classString(args), 'Array');
-        assert.equal(stx[0][0], Symbol.BINDINGS);
+        bindings = arr[0];
+        bodyStx = arr.slice(1, -1);
+        resultStx = arr[arr.length - 1];
 
-        return format('function ($0) {$1}',
-                      compiler.compileArgs(args, compiler),
-                      compiler.compileBlock(body, compiler));
+        assert.equal(bindings.type, 'Array');
+        assert.equal(bindings.value[0].type, 'Symbol');
+        assert.equal(bindings.value[0].value, '#BINDINGS');
+
+        args = this.compileSymbols(bindings.value.slice(1));
+
+        body = bodyStx.map(function (stx) {
+            return this.compile(stx);
+        }, this);
+
+        result = this.compile(resultStx);
+
+        return new JSFunctionEmitter(args, body, result);
     },
 
-    '#BLOCK': function (stx, compiler) {
-        var template = [
-            '(function () {',
-            '$0',
-            '}.call(this, typeof arguments != "undefined" ? arguments : [])'
-        ].join('');
-
-        return format(template, compiler.compileBlock(stx, compiler));
+    '#BLOCK': function (arr) {
+        return new JSIIFEEmitter(arr.map(function (stx) { 
+            this.compile(stx);
+        }, this)); 
     }
 };

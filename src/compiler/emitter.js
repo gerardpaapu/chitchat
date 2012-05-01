@@ -15,7 +15,7 @@ var classString = exports.classString = function (obj) {
             return 'Null';
 
         default:
-            return _toString.call(obj).slice(8, -1); 
+            return _toString.call(obj).slice(8, -1);
     }
 };
 
@@ -45,6 +45,8 @@ JSEmitter.just = function (str) {
     emitter.compileAsExpression = function () {
         return str;
     };
+
+    return emitter;
 };
 
 JSEmitter.justExpression = function (str) {
@@ -57,6 +59,8 @@ JSEmitter.justExpression = function (str) {
     emitter.compileAsExpression = function () {
         return str;
     };
+
+    return emitter;
 };
 
 // If you want to include an ad-hoc javascript string
@@ -68,6 +72,8 @@ JSEmitter.justStatement = function (str) {
     emitter.compileAsStatement = function () {
         return str;
     };
+
+    return emitter;
 };
 
 JSEmitter.compileAsExpression = function (obj) {
@@ -76,7 +82,7 @@ JSEmitter.compileAsExpression = function (obj) {
 };
 
 JSEmitter.compileAsStatement = function (obj) {
-    assert.ok(obj instanceof JSEmitter);
+    assert.ok(obj instanceof JSEmitter, obj + ': is a JSEmitter');
     return obj.compileAsStatement();
 };
 
@@ -107,9 +113,32 @@ JSEmitter.prototype.compileAsReturnStatement = function () {
     return 'return ' + this.compileAsExpression() + ';\n';
 };
 
+JSEmitter.prototype.toString = function () {
+    return 'JSEmitter';
+};
+var JSSequenceEmitter = function (emitters) {
+    emitters.forEach(function (item) {
+        if (!(item instanceof JSEmitter)) {
+            throw new TypeError(item + ' is not a JSEmitter');
+        }
+    });
+    this.emitters = emitters;
+};
+
+exports.JSSequenceEmitter = JSSequenceEmitter;
+
+JSSequenceEmitter.prototype = new JSEmitter();
+
+JSSequenceEmitter.prototype.compileAsStatement = function () {
+    return this.emitters.map(JSEmitter.compileAsStatement).join('\n');
+};
+
 var JSNumberEmitter = function (value) {
     this.value = value;
+    assert.equal(typeof value, 'number');
 };
+
+exports.JSNumberEmitter = JSNumberEmitter;
 
 JSNumberEmitter.prototype = new JSEmitter();
 
@@ -119,7 +148,10 @@ JSNumberEmitter.prototype.compileAsExpression = function () {
 
 var JSStringEmitter = function (value) {
     this.value = value;
+    assert.equal(typeof value, 'string');
 };
+
+exports.JSStringEmitter = JSStringEmitter;
 
 JSStringEmitter.prototype = new JSEmitter();
 
@@ -132,10 +164,13 @@ var JSAssignmentEmitter = function (symbol, value) {
     this.value = value;
 }; 
 
+exports.JSAssignmentEmitter = JSAssignmentEmitter;
+
 JSAssignmentEmitter.prototype = new JSEmitter();
 
-JSAssignmentEmitter.prototype.compileAsExpression = function (symbol) {
-    return format('$0 = $1', JSSymbolEmitter.compile(symbol), this.compileAsExpression());
+JSAssignmentEmitter.prototype.compileAsExpression = function () {
+    return format('$0 = $1', JSEmitter.compileAsExpression(this.symbol), 
+                            JSEmitter.compileAsExpression(this.value));
 };
 
 var JSSymbolEmitter = function (value) {
@@ -152,9 +187,10 @@ JSSymbolEmitter.prototype.compileAsExpression = function (){
 };
 
 JSSymbolEmitter.prototype.validate = function () {
-    assert.ok(JSSymbolEmitter.reserved.indexOf(this.value) != -1);
-    assert.ok(JSSymbolEmitter.keywords.indexOf(this.value) != -1);
-    assert.ok(/^[a-z_\$][a-z0-9_\$]*$/i.test(this.value));
+    var msg = ['"', this.value, '" should be a valid javascript Identifier'].join('');
+    assert.ok(JSSymbolEmitter.reserved.indexOf(this.value) == -1, msg);
+    assert.ok(JSSymbolEmitter.keywords.indexOf(this.value) == -1, msg);
+    assert.ok(/^[a-z_\$][a-z0-9_\$]*$/i.test(this.value), msg);
 };
 
 JSSymbolEmitter.compile = function (sym) {
@@ -176,18 +212,20 @@ JSSymbolEmitter.reserved = [
 ];   
 
 var JSAccessorEmitter = function (root, key) {
-    assert.ok(classString(key) == 'String' || 
-              classString(key) == 'Number');
     this.root = root;
     this.key = key
+    assert.ok(this.root instanceof JSEmitter);
+    assert.ok(this.key instanceof JSEmitter);
 };
+
+exports.JSAccessorEmitter = JSAccessorEmitter;
 
 JSAccessorEmitter.prototype = new JSEmitter();
 
 JSAccessorEmitter.prototype.compileAsExpression = function () {
     return format('$0[$1]',
                   JSEmitter.compileAsExpression(this.root),
-                  JSON.stringify(this.key));
+                  JSEmitter.compileAsExpression(this.key));
 };
 
 var JSFunctionEmitter = function (args, body, result) {
@@ -228,6 +266,12 @@ var JSMethodCallEmitter = function (obj, methodName, args) {
     this.obj = obj;
     this.methodName = methodName;
     this.args = args;
+
+    assert.ok(this.obj instanceof JSEmitter);
+    assert.ok(this.methodName instanceof JSEmitter);
+    this.args.forEach(function (arg) {
+        assert.ok(arg instanceof JSEmitter, arg + ':  is not a JSEmitter');
+    });
 };
 
 exports.JSMethodCallEmitter = JSMethodCallEmitter;
@@ -237,7 +281,7 @@ JSMethodCallEmitter.prototype = new JSEmitter();
 JSMethodCallEmitter.prototype.compileAsExpression = function () {
     return format('$0[$1]($2)',
                   this.obj.compileAsExpression(),
-                  JSON.stringify(this.methodName),
+                  this.methodName.compileAsExpression(),
                   this.args.map(JSEmitter.compileAsExpression).join(', '));
 };
 
@@ -266,7 +310,7 @@ JSIfEmitter.prototype.compileAsStatement = function () {
                       this.test.compileAsExpression(),
                       this.trueBranch.compileAsStatement());
     } else {
-        return format('if ($0) {\n$1\n} else {\n$1\n}',
+        return format('if ($0) {\n$1\n} else {\n$2\n}',
                       this.test.compileAsExpression(),
                       this.trueBranch.compileAsStatement(),
                       this.falseBranch.compileAsStatement());
@@ -279,15 +323,16 @@ var JSKeywordEmitter = function (keyword) {
 };
 
 exports.JSKeywordEmitter = JSKeywordEmitter;
-
-JSEmitter.prototype.compileAsExpression = function () {
+JSKeywordEmitter.prototype = new JSEmitter();
+JSKeywordEmitter.prototype.compileAsExpression = function () {
     return this.keyword;
 };
 
-JSEmitter.prototype.compileAsStatement = function () {
-    throw new TypeError(keyword + ' cannot be compiled as a statement');
+/*
+JSKeywordEmitter.prototype.compileAsStatement = function () {
+    throw new TypeError(this.keyword + ' cannot be compiled as a statement');
 };
-
+*/
 JSKeywordEmitter.TRUE = new JSKeywordEmitter('true');
 JSKeywordEmitter.FALSE = new JSKeywordEmitter('false');
 JSKeywordEmitter.NULL = new JSKeywordEmitter('null');
@@ -308,7 +353,7 @@ JSVariableDeclaration.prototype.compileAsExpression = function () {
 };
 
 JSVariableDeclaration.prototype.compileAsStatement = function () {
-    if (symbols.length === 0) return '';
+    if (this.symbols.length === 0) return '';
 
     return format('var $0;', this.symbols.map(JSSymbolEmitter.compile).join(', '));
 };
@@ -363,6 +408,7 @@ JSInfixEmitter.newInfix = function (operator) {
 
     Constructor.prototype = new JSInfixEmitter();
     Constructor.prototype.operator = operator;
+    return Constructor;
 };
 
 // These are necessary because they are shortcutting operators
@@ -379,7 +425,7 @@ var maybeArgs = JSEmitter.justExpression('typeof arguments != "undefined" ? argu
 // i.e. 'this' and 'arguments'
 var JSIIFEEmitter = function (statements, result) {
     var fn = new JSFunctionEmitter([], statements, result);
-    this.stx = new JSMethodCallEmitter(fn, 'apply', [JSKeywordEmitter.THIS, maybeArgs]);
+    this.stx = new JSMethodCallEmitter(fn, new JSStringEmitter('apply'), [JSKeywordEmitter.THIS, maybeArgs]);
 };
 
 exports.JSIIFEEmitter = JSIIFEEmitter;

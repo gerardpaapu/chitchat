@@ -140,7 +140,7 @@ Parser.prototype.parseExpr_ = function () {
 
         case TokenTypes.POSITIONAL_ARG:
             token = this.shift();
-            return new Syntax(token.location, [Symbol.ARGS, token.value]);
+            return new Syntax(token.location, [this.Syntax(Symbol.ARGS), this.Syntax(token.value)]);
 
         case TokenTypes.CARET:
             return this.parseFunctionLiteral();

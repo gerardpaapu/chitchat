@@ -1,44 +1,42 @@
-var format = require('../format.js').format,
-    Symbol = require('../symbol.js').Symbol,
+var Symbol = require('../symbol.js').Symbol,
+    JSArrayEmitter = require('../emitter.js').JSArrayEmitter,
+    JSDictionaryEmitter = require('../emitter.js').JSDictionaryEmitter,
+    JSAccessorEmitter = require('../emitter.js').JSAccessorEmitter,
+    JSKeywordEmitter = require('../emitter.js').JSKeywordEmitter,
+    JSNumberEmitter = require('../emitter.js').JSNumberEmitter,
     assert = require('assert');
 
 module.exports = {
     // Array literals 
-    '#ARRAY': function (stx, compiler) {
-        var compile, body;
-
-        compile = function (stx) {
-            return compiler.compile(stx);
-        };
-
-        body = stx[0].map(compile);
-
-        return '[' + body.join(', ') + ']';
+    '#ARRAY': function (arr) {
+        var body = this.compileExpressions(arr[0].value);
+        return new JSArrayEmitter(body);
     },
 
     // Dictionary literals
-    '#DICT': function (stx, compiler) {
-        var args = [].slice.call(arguments),
+    '#DICT': function (arr) {
+        var args = arr[0],
             max = args.length,
-            pairs = [],
+            result = {},
             i;
 
         if (max % 2 !== 0) throw new SyntaxError(); 
 
         for (i = 0; i < max; i += 2) {
-            assert.ok(args[i] instanceof Symbol);
-            pairs.push(format('"$0": $1',
-                              args[i].value,
-                              compiler.compile(args[i + 1])));
+            assert.ok(args[i].type == 'Symbol' ||
+                      args[i].type == 'String');
+
+            result[args[i].value] = this.compile(args[i + 1]);
         }
 
-        return format('{$0}', pairs.join(', '));
+        return new JSDictionaryEmitter(result);
     },
 
     // Positional Argument Literals
-    '#ARGS': function (stx, compiler) {
+    '#ARGS': function (arr) {
         // e.g. (#ARGS 2) -> arguments[2]
-        assert.equal(stx.length, 1);
-        return format('arguments[$0]', stx[0]); 
+        assert.equal(arr.length, 1);
+        return new JSAccessorEmitter(new JSKeywordEmitter('arguments'),
+                                     new JSNumberEmitter(arr[0].value)); 
     }
 };

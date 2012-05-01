@@ -9,7 +9,7 @@
 ;;; Items of the Ordered Set should implement 'Ord'
 (class OrderedSet
     (constructor (items, ordered, distinct)
-        (set! this.items (or items #[]))
+        (set this.items (or items #[]))
 
         ;; ensure the qualities of the ordered set in this.items
         ;; call uniquify! unless the items are known to be distinct
@@ -55,7 +55,7 @@
 
     (method (uniqify!)
         ;; Ensure that this.items is distinct
-        (set! this.items
+        (set this.items
             (this.items reduce ^[out, item] (if (out contains? item)
                                                 out
                                                 (out concat item))

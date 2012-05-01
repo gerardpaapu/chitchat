@@ -1,47 +1,66 @@
-var format = require('../format.js').format,
-    classString = require('../../runtime/classString.js').classString,
+var classString = require('../../runtime/classString.js').classString,
     Symbol = require('../symbol.js').Symbol,
+    JSSymbolEmitter = require('../emitter.js').JSSymbolEmitter,
+    JSAssignmentEmitter = require('../emitter.js').JSAssignmentEmitter,
+    JSAccessorEmitter = require('../emitter.js').JSAccessorEmitter,
+    JSStringEmitter = require('../emitter.js').JSStringEmitter,
+    JSArrayEmitter = require('../emitter.js').JSArrayEmitter,
+    JSFunctionCallEmitter = require('../emitter.js').JSFunctionCallEmitter,
     assert = require('assert');
 
 module.exports = {
-    'set!': function (stx, compiler) {
-        // (set foo bar)               -> foo = bar
-        // (set! (foo bar) baz)        -> foo['bar'] = baz
-        // (set! (foo (#MSG bar)) baz) -> foo[bar] = baz
+    'set': function (arr) {
         var obj, msg, place, value;
 
-        function compile (stx) {
-            return compiler.compile(stx);
+        place = arr[0];
+        value = arr[1];
+
+        // (set foo bar) -> foo = bar
+        if (place.type === 'Symbol') {
+            return new JSAssignmentEmitter(this.compile(place),
+                                           this.compile(value));
         }
 
-        place = stx[0];
-        value = stx[1];
+        assert.equal(place.type, 'Array');
 
-        if (place instanceof Symbol) {
-            return format('$0 = $1', compile(place), compile(value));
+        // (set (#GET foo bar) baz)   -> foo[bar] = baz 
+        if (place.value[0].type == 'Symbol' &&
+            place.value[0].value === '#GET') {
+
+            if (place.value.length !== 3) throw new SyntaxError(place);
+
+            obj = place.value[1];
+            msg = place.value[2];
+
+            return new JSAssignmentEmitter(
+                new JSAccessorEmitter(this.compile(obj), this.compile(msg)),
+                this.compile(value));
         }
 
-        assert.equal(classString(place), 'Array');
-        assert.equal(place.length, 2);
+        // (set (foo bar) baz)        -> _passMessage(foo, 'set', ['bar', baz])
+        // (set (foo (#MSG bar)) baz) -> _passMessage(foo, 'set', [bar, baz])
+        assert.equal(place.value.length, 2);
 
-        obj = place[0];
-        msg = place[1];
+        obj = place.value[0];
+        msg = place.value[1];
 
-        assert.ok((classString(msg) === 'Array' && msg[0] === Symbol.MSG) ||
-                  msg instanceof Symbol);
+        assert.ok(this.isMessage(msg));
 
-        return format('$0[$1] = $2', compile(obj), compiler.compileMessage(msg), compile(value));
+        return new JSFunctionCallEmitter(
+            new JSSymbolEmitter('_passMessage'),
+            [
+                this.compile(obj),
+                new JSStringEmitter('set'),
+                new JSArrayEmitter([
+                       this.compileMessage(msg),
+                       this.compile(value)
+                ])
+            ]);  
     },
 
-   'set': function () {
-       return 'null';
-   }, 
-
-   'get!': function () {
-       return 'null';
-   },
-
-   'get': function () {
-       return 'null';
-   }
+    '#GET': function (arr) {
+        // (#GET foo bar) -> foo[bar]
+        return new JSAccessorEmitter(this.compile(arr[0]),
+                                     this.compile(arr[1]));
+    }
 };
