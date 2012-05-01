@@ -47,7 +47,7 @@ Symbol.isLegalValue = function (value) {
     i = 1;
     while (i < value.length) {
         ch = value[i++];
-        if (all.indexOf(ch) == -1) {
+        if (all.indexOf(ch) === -1) {
             return false;
         }
     }
@@ -62,13 +62,13 @@ shared_keywords = ["this", "null", "true", "false"];
 // these words may not be used as identifiers in
 // javascript as specified in ecma-262 7.6
 javascript_reserved = [
-    'break', 'case', 'catch', 'continue', 'debugger', 
-    'default', 'delete', 'do', 'else', 'finally', 'for', 
-    'function', 'if', 'in', 'instanceof', 'new', 'return', 
-    'switch', 'this', 'throw', 'try', 'typeof', 'var', 'void', 
-    'while', 'with', 'class', 'enum', 'extends', 'super', 
+    'break', 'case', 'catch', 'continue', 'debugger',
+    'default', 'delete', 'do', 'else', 'finally', 'for',
+    'function', 'if', 'in', 'instanceof', 'new', 'return',
+    'switch', 'this', 'throw', 'try', 'typeof', 'var', 'void',
+    'while', 'with', 'class', 'enum', 'extends', 'super',
     'const', 'export', 'import', 'null', 'true', 'false'
-];   
+];
 
 // these are the legal components of symbols in chitchat
 // - glyphs  '_-+=$&%@!?~`<>:|'
@@ -86,7 +86,7 @@ javascript_reserved = [
 // because of this mismatch, the following characters must be escaped '-+=&%@!?~`<>:|'
 escape_map = {
     '_': 'underscore',
-    '-': 'minus',
+    '-': 'dash',
     '+': 'plus',
     '=': 'equal',
     '&': 'and',
@@ -98,13 +98,12 @@ escape_map = {
     '`': 'grave',
     '<': 'less',
     '>': 'greater',
-    ':': 'colon',
     '|': 'or'
 };
 
 unescape_map = {
     '_underscore_': '_',
-    '_minus_': '-',
+    '_dash_': '-',
     '_plus_': '+',
     '_equal_': '=',
     '_and_': '&',
@@ -116,14 +115,13 @@ unescape_map = {
     '_grave_': '`',
     '_less_': '<',
     '_greater_': '>',
-    '_colon_': ':',
     '_or_': '|'
 };
 
 unescapeSymbol = function (src) {
     var result = '', i = 0, next, max, ch, key;
 
-    if (src.slice(0, 2) == '_$') {
+    if (src.slice(0, 2) === '_$') {
         // if the reserved word prefix is present
         // discard it
         src = src.slice(2);
@@ -154,7 +152,7 @@ unescapeSymbol = function (src) {
 };
 
 escapeSymbol = function (src) {
-    if (shared_keywords.indexOf(src) != -1)
+    if (shared_keywords.indexOf(src) !== -1)
         return src;
 
     var result = '', i, max, ch;
@@ -168,7 +166,7 @@ escapeSymbol = function (src) {
         }
     }
 
-    if (javascript_reserved.indexOf(result) != -1) {
+    if (javascript_reserved.indexOf(result) !== -1) {
         return '_$' + result;
     } else {
         return result;

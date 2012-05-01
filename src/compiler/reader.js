@@ -11,7 +11,7 @@
 //       := literal
 //
 // message := symbol
-//         := '(' 'message' expr ')' 
+//         := '(' 'message' expr ')'
 //
 // rest := '.' symbol rest
 //      := '.' '[' expr ']' rest
@@ -21,13 +21,13 @@
 //
 // literal  := number | string | array | dict | function | letexpr
 //
-// array    := '#[' expr* ']'  
+// array    := '#[' expr* ']'
 //
 // dict     := '#{' [ symbol expr ]* '}'
 //
 // function := '^' '[' [ symbol ]* ']' expr
 //          := '^' expr
-//          := '(' 'function' '[' symbol ']' expr* ')' 
+//          := '(' 'function' '[' symbol ']' expr* ')'
 //
 // letexpr  := '(' 'let' '[' binding* ']' expr* ')'
 //
@@ -217,7 +217,7 @@ Parser.prototype.parseColonAccessor = function (root) {
         loc = new Span(root.location.start, prop.location.end),
         get = new Syntax(loc, Symbol.GET);
 
-    this.parseRest(new Syntax(loc, [get, root, prop]));
+    return this.parseRest(new Syntax(loc, [get, root, prop]));
 };
 
 Parser.prototype.parseDoubleColonAccessor = function (root) {
@@ -240,7 +240,7 @@ Parser.prototype.parseFunctionLiteral = function () {
 
     if (this.token.type === TokenTypes.OPEN_BRACKET) {
         // Parsing "^" bindings expr
-        bindings = this.parseBindings();     
+        bindings = this.parseBindings();
     } else {
         // Parsing "^" expr
         bindings = this.Syntax([this.Syntax(Symbol.BINDINGS)]);

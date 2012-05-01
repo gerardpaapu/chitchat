@@ -23,8 +23,8 @@ module.exports = {
 
         assert.equal(place.type, 'Array');
 
-        // (set (#GET foo bar) baz)   -> foo[bar] = baz 
-        if (place.value[0].type == 'Symbol' &&
+        // (set (#GET foo bar) baz)   -> foo[bar] = baz
+        if (place.value[0].type === 'Symbol' &&
             place.value[0].value === '#GET') {
 
             if (place.value.length !== 3) throw new SyntaxError(place);
